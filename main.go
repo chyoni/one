@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/chiwon99881/one/blockchain"
+)
 
 func main() {
-	fmt.Println("one coin by chiwon")
+	chain := blockchain.BlockChain()
+	for _, block := range chain.Blocks {
+		fmt.Println(block)
+	}
 }
