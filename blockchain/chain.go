@@ -18,8 +18,12 @@ var blockchain *chain
 func (bc *chain) persistChain(newBlock *Block) {
 	bc.Height++
 	bc.NewestHash = newBlock.Hash
-	hashAsBytes := utils.ToBytes(bc.NewestHash)
-	db.SaveChainDB(hashAsBytes)
+	chainAsBytes := utils.ToBytes(bc)
+	db.SaveChainDB(chainAsBytes)
+}
+
+func restoreChain(data []byte) {
+	utils.FromBytes(blockchain, data)
 }
 
 func AddBlock(bc *chain, data string) {
@@ -35,7 +39,12 @@ func BlockChain() *chain {
 				Height:     0,
 				NewestHash: "",
 			}
-			AddBlock(blockchain, "first block")
+			existChain := db.GetExistChain()
+			if existChain == nil {
+				AddBlock(blockchain, "one")
+			} else {
+				restoreChain(existChain)
+			}
 		})
 	}
 	return blockchain

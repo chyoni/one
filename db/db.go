@@ -53,3 +53,13 @@ func SaveBlockDB(key string, data []byte) {
 		return nil
 	})
 }
+
+func GetExistChain() []byte {
+	var newestHash []byte
+	DB().View(func(t *bolt.Tx) error {
+		b := t.Bucket([]byte(chainBucket))
+		newestHash = b.Get([]byte(cursor))
+		return nil
+	})
+	return newestHash
+}
