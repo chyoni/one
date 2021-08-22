@@ -13,3 +13,5 @@
   > gob encode, decode
 
 - #05 Restore blocks
+
+- #06 REST API Server Part 1
