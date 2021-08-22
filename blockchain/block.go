@@ -1,34 +1,41 @@
 package blockchain
 
 import (
-	"bytes"
 	"crypto/sha256"
-	"encoding/gob"
 	"fmt"
 	"time"
+
+	"github.com/chiwon99881/one/db"
+	"github.com/chiwon99881/one/utils"
 )
 
 type Block struct {
 	Data      string
 	Hash      string
 	PrevHash  string
+	Height    int
 	Timestamp int
 }
 
+func persistBlock(newBlock *Block) {
+	blockAsBytes := utils.ToBytes(newBlock)
+	db.SaveBlockDB(newBlock.Hash, blockAsBytes)
+}
+
 func (b *Block) hash() {
-	var blockBuffer bytes.Buffer
-	enc := gob.NewEncoder(&blockBuffer)
-	enc.Encode(b)
-	bytes := sha256.Sum256(blockBuffer.Bytes())
+	blockAsBytes := utils.ToBytes(b)
+	bytes := sha256.Sum256(blockAsBytes)
 	hash := fmt.Sprintf("%x", bytes)
 	b.Hash = hash
 }
 
 // CreateBlock is generate new block.
-func CreateBlock(data, prevHash string) *Block {
+func CreateBlock(data, prevHash string, height int) *Block {
 	b := &Block{
+		Hash:      "",
 		Data:      data,
 		PrevHash:  prevHash,
+		Height:    height,
 		Timestamp: int(time.Now().Unix()),
 	}
 	b.hash()
