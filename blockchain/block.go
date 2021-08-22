@@ -17,6 +17,25 @@ type Block struct {
 	Timestamp int
 }
 
+func Blocks(bc *chain) []*Block {
+	var blocks []*Block
+	hashCursor := bc.NewestHash
+	for {
+		block := &Block{}
+		blockAsBytes := db.FindBlock(hashCursor)
+		if blockAsBytes == nil {
+			break
+		}
+		utils.FromBytes(block, blockAsBytes)
+		blocks = append(blocks, block)
+		if block.PrevHash == "" {
+			break
+		}
+		hashCursor = block.PrevHash
+	}
+	return blocks
+}
+
 func persistBlock(newBlock *Block) {
 	blockAsBytes := utils.ToBytes(newBlock)
 	db.SaveBlockDB(newBlock.Hash, blockAsBytes)

@@ -63,3 +63,13 @@ func GetExistChain() []byte {
 	})
 	return newestHash
 }
+
+func FindBlock(hash string) []byte {
+	var blockAsBytes []byte
+	DB().View(func(t *bolt.Tx) error {
+		b := t.Bucket([]byte(blockBucket))
+		blockAsBytes = b.Get([]byte(hash))
+		return nil
+	})
+	return blockAsBytes
+}

@@ -1,11 +1,10 @@
 package main
 
 import (
-	"github.com/chiwon99881/one/blockchain"
-	"github.com/chiwon99881/one/db"
+	"github.com/chiwon99881/one/api"
 )
 
 func main() {
-	blockchain.BlockChain()
-	defer db.Close()
+	api.Start("4000")
+	//defer db.Close()
 }

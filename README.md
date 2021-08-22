@@ -11,3 +11,5 @@
 - #04 Restore blockchain
 
   > gob encode, decode
+
+- #05 Restore blocks
