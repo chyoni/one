@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/chiwon99881/one/blockchain"
 	"github.com/chiwon99881/one/utils"
 	"github.com/gorilla/mux"
 )
@@ -50,10 +51,25 @@ func home(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func blocks(rw http.ResponseWriter, r *http.Request) {
+	blocks := blockchain.Blocks(blockchain.BlockChain())
+	resToJSON, err := json.Marshal(blocks)
+	utils.HandleErr(err)
+	rw.Header().Add("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	_, err = fmt.Fprintf(rw, "%s", resToJSON)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(rw, "Something wrong...")
+		return
+	}
+}
+
 func Start(aPort string) {
 	port = aPort
 	fmt.Printf("Server listening on http://localhost:%s", port)
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", home)
+	router.HandleFunc("/", home).Methods("GET")
+	router.HandleFunc("/blocks", blocks).Methods("GET")
 	utils.HandleErr(http.ListenAndServe(":4000", router))
 }
