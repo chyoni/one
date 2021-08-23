@@ -36,6 +36,13 @@ func Blocks(bc *chain) []*Block {
 	return blocks
 }
 
+func FindBlock(hash string) *Block {
+	block := &Block{}
+	blockAsBytes := db.FindBlock(hash)
+	utils.FromBytes(block, blockAsBytes)
+	return block
+}
+
 func persistBlock(newBlock *Block) {
 	blockAsBytes := utils.ToBytes(newBlock)
 	db.SaveBlockDB(newBlock.Hash, blockAsBytes)

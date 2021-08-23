@@ -17,6 +17,10 @@ func (u URL) MarshalText() (text []byte, err error) {
 
 type URL string
 
+type errResponse struct {
+	ErrMessage string `json:"errMessage"`
+}
+
 type urlDescription struct {
 	URL         URL    `json:"url"`
 	Description string `json:"description"`
@@ -38,15 +42,24 @@ func home(rw http.ResponseWriter, r *http.Request) {
 			Method:      "GET",
 			Description: "See all blocks in one coin's blockchain",
 		},
+		{
+			URL:         URL("/block/{block_hash}"),
+			Method:      "GET",
+			Description: "See a block in one coin's blockchain",
+		},
 	}
 	marshalToJSON, err := json.Marshal(url)
-	utils.HandleErr(err)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
 	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	_, err = fmt.Fprintf(rw, "%s", marshalToJSON)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(rw, "Something's wrong...")
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
 	}
 }
@@ -54,15 +67,32 @@ func home(rw http.ResponseWriter, r *http.Request) {
 func blocks(rw http.ResponseWriter, r *http.Request) {
 	blocks := blockchain.Blocks(blockchain.BlockChain())
 	resToJSON, err := json.Marshal(blocks)
-	utils.HandleErr(err)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
 	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	_, err = fmt.Fprintf(rw, "%s", resToJSON)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(rw, "Something wrong...")
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
 	}
+}
+
+func block(rw http.ResponseWriter, r *http.Request) {
+	paramsMap := mux.Vars(r)
+	hash := paramsMap["block_hash"]
+	block := blockchain.FindBlock(hash)
+	err := json.NewEncoder(rw).Encode(block)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
 }
 
 func Start(aPort string) {
@@ -71,5 +101,6 @@ func Start(aPort string) {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", home).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET")
+	router.HandleFunc("/block/{block_hash}", block).Methods("GET", "POST")
 	utils.HandleErr(http.ListenAndServe(":4000", router))
 }

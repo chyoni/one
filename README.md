@@ -17,3 +17,5 @@
 - #06 REST API Server Part 1
 
 - #07 REST API Server Part 2 (all blocks)
+
+- #08 REST API Server Part 3 (a block)
