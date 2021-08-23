@@ -57,6 +57,11 @@ func home(rw http.ResponseWriter, r *http.Request) {
 			Method:      "GET",
 			Description: "See a block in one coin's blockchain",
 		},
+		{
+			URL:         URL("/blockchain"),
+			Method:      "GET",
+			Description: "See coin's blockchain status",
+		},
 	}
 	marshalToJSON, err := json.Marshal(url)
 	if err != nil {
@@ -116,6 +121,16 @@ func addBlock(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusCreated)
 }
 
+func chainStatus(rw http.ResponseWriter, r *http.Request) {
+	rw.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(rw).Encode(blockchain.BlockChain())
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+}
+
 func JSONHeaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
@@ -132,5 +147,6 @@ func Start(aPort string) {
 	router.HandleFunc("/blocks", blocks).Methods("GET")
 	router.HandleFunc("/block/{block_hash}", block).Methods("GET")
 	router.HandleFunc("/block", addBlock).Methods("POST")
+	router.HandleFunc("/blockchain", chainStatus).Methods("GET")
 	utils.HandleErr(http.ListenAndServe(":4000", router))
 }

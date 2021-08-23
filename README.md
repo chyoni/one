@@ -23,3 +23,5 @@
 - #09 REST API Server Part 4 (middleware)
 
 - #10 REST API Server Part 5 (add block)
+
+- #11 REST API Server Part 6 (blockchain status)
