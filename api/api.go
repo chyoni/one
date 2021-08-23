@@ -54,7 +54,6 @@ func home(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
 	}
-	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	_, err = fmt.Fprintf(rw, "%s", marshalToJSON)
 	if err != nil {
@@ -72,7 +71,6 @@ func blocks(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
 	}
-	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	_, err = fmt.Fprintf(rw, "%s", resToJSON)
 	if err != nil {
@@ -95,10 +93,18 @@ func block(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func JSONHeaderMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func Start(aPort string) {
 	port = aPort
 	fmt.Printf("Server listening on http://localhost:%s", port)
 	router := mux.NewRouter().StrictSlash(true)
+	router.Use(JSONHeaderMiddleware)
 	router.HandleFunc("/", home).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET")
 	router.HandleFunc("/block/{block_hash}", block).Methods("GET", "POST")
