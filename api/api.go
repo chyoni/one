@@ -21,6 +21,10 @@ type errResponse struct {
 	ErrMessage string `json:"errMessage"`
 }
 
+type AddBlockPayload struct {
+	Data string `json:"data"`
+}
+
 type urlDescription struct {
 	URL         URL    `json:"url"`
 	Description string `json:"description"`
@@ -41,6 +45,12 @@ func home(rw http.ResponseWriter, r *http.Request) {
 			URL:         URL("/blocks"),
 			Method:      "GET",
 			Description: "See all blocks in one coin's blockchain",
+		},
+		{
+			URL:         URL("/block"),
+			Method:      "POST",
+			Description: "Add a block to one coin's blockchain",
+			Payload:     "data:string",
 		},
 		{
 			URL:         URL("/block/{block_hash}"),
@@ -93,6 +103,19 @@ func block(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func addBlock(rw http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	bodyData := &AddBlockPayload{}
+	err := json.NewDecoder(r.Body).Decode(&bodyData)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+	blockchain.AddBlock(blockchain.BlockChain(), bodyData.Data)
+	rw.WriteHeader(http.StatusCreated)
+}
+
 func JSONHeaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
@@ -107,6 +130,7 @@ func Start(aPort string) {
 	router.Use(JSONHeaderMiddleware)
 	router.HandleFunc("/", home).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET")
-	router.HandleFunc("/block/{block_hash}", block).Methods("GET", "POST")
+	router.HandleFunc("/block/{block_hash}", block).Methods("GET")
+	router.HandleFunc("/block", addBlock).Methods("POST")
 	utils.HandleErr(http.ListenAndServe(":4000", router))
 }
