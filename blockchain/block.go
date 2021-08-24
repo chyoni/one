@@ -10,11 +10,12 @@ import (
 )
 
 type Block struct {
-	Data      string `json:"data"`
-	Hash      string `json:"hash"`
-	PrevHash  string `json:"prevHash,omitempty"`
-	Height    int    `json:"height"`
-	Timestamp int    `json:"-"`
+	Data         string `json:"data"`
+	Hash         string `json:"hash"`
+	PrevHash     string `json:"prevHash,omitempty"`
+	Height       int    `json:"height"`
+	Timestamp    int    `json:"-"`
+	Transactions []*Tx  `json:"transactions"`
 }
 
 func Blocks(bc *chain) []*Block {
