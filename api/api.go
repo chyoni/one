@@ -21,8 +21,13 @@ type errResponse struct {
 	ErrMessage string `json:"errMessage"`
 }
 
-type AddBlockPayload struct {
+type addBlockPayload struct {
 	Data string `json:"data"`
+}
+
+type addTransactionPayload struct {
+	To     string `json:"to"`
+	Amount int    `json:"amount"`
 }
 
 type urlDescription struct {
@@ -61,6 +66,16 @@ func home(rw http.ResponseWriter, r *http.Request) {
 			URL:         URL("/blockchain"),
 			Method:      "GET",
 			Description: "See coin's blockchain status",
+		},
+		{
+			URL:         URL("/mempool"),
+			Method:      "GET",
+			Description: "See all transactions in mempool",
+		},
+		{
+			URL:         URL("/transaction/add"),
+			Method:      "POST",
+			Description: "Add a transaction to mempool",
 		},
 	}
 	marshalToJSON, err := json.Marshal(url)
@@ -110,8 +125,8 @@ func block(rw http.ResponseWriter, r *http.Request) {
 
 func addBlock(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	bodyData := &AddBlockPayload{}
-	err := json.NewDecoder(r.Body).Decode(&bodyData)
+	bodyData := &addBlockPayload{}
+	err := json.NewDecoder(r.Body).Decode(bodyData)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
@@ -131,6 +146,34 @@ func chainStatus(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func mempool(rw http.ResponseWriter, r *http.Request) {
+	rw.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(rw).Encode(blockchain.Mempool().Txs)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+}
+
+func addTx(rw http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	addTxPayload := &addTransactionPayload{}
+	err := json.NewDecoder(r.Body).Decode(addTxPayload)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+	err = blockchain.Mempool().AddTx(addTxPayload.To, addTxPayload.Amount)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+	rw.WriteHeader(http.StatusCreated)
+}
+
 func JSONHeaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
@@ -140,7 +183,7 @@ func JSONHeaderMiddleware(next http.Handler) http.Handler {
 
 func Start(aPort string) {
 	port = aPort
-	fmt.Printf("Server listening on http://localhost:%s", port)
+	fmt.Printf("Server listening on http://localhost:%s\n", port)
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(JSONHeaderMiddleware)
 	router.HandleFunc("/", home).Methods("GET")
@@ -148,5 +191,7 @@ func Start(aPort string) {
 	router.HandleFunc("/block/{block_hash}", block).Methods("GET")
 	router.HandleFunc("/block", addBlock).Methods("POST")
 	router.HandleFunc("/blockchain", chainStatus).Methods("GET")
+	router.HandleFunc("/mempool", mempool).Methods("GET")
+	router.HandleFunc("/transaction/add", addTx).Methods("POST")
 	utils.HandleErr(http.ListenAndServe(":4000", router))
 }

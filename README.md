@@ -27,3 +27,5 @@
 - #11 REST API Server Part 6 (blockchain status)
 
 - #12 Mempool and transaction
+
+- #13 REST API Server Part 7 (transaction)

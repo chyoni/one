@@ -99,13 +99,20 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	return tx, nil
 }
 
-func (m *mempool) AddTx(from, to string, amount int) error {
-	tx, err := makeTx(from, to, amount)
+func (m *mempool) AddTx(to string, amount int) error {
+	tx, err := makeTx("chyonee", to, amount)
 	if err != nil {
 		return err
 	}
 	m.Txs = append(m.Txs, tx)
 	return nil
+}
+
+func (m *mempool) TxToConfirm() []*Tx {
+	var txs []*Tx
+	txs = append(txs, m.Txs...)
+	m.Txs = nil
+	return txs
 }
 
 func Mempool() *mempool {
