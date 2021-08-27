@@ -72,7 +72,7 @@ func GetUTxOutsByAddress(from string) []*UTxOut {
 		for index, txOut := range tx.TxOuts {
 			if txOut.Owner == from {
 				_, isTrue := sTxOut[tx.TxID]
-				if !isTrue {
+				if !isTrue && !isOnMempool(tx.TxID, from) {
 					uTxOut := &UTxOut{
 						TxID:   tx.TxID,
 						Index:  index,
@@ -152,6 +152,20 @@ func (m *mempool) TxToConfirm() []*Tx {
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
 	return txs
+}
+
+func isOnMempool(txID, owner string) bool {
+	isOn := false
+Outer:
+	for _, tx := range m.Txs {
+		for _, txIn := range tx.TxIns {
+			if txIn.TxID == txID && txIn.Owner == owner {
+				isOn = true
+				break Outer
+			}
+		}
+	}
+	return isOn
 }
 
 func (b *Block) coinbaseTx() {

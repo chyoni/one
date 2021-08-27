@@ -39,3 +39,5 @@
 - #17 Mining DONE
 
 - #18 Unspend Transaction Output
+
+- #19 isOnMempool Part 1
