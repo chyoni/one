@@ -37,3 +37,5 @@
 - #16 Mining Part 2
 
 - #17 Mining DONE
+
+- #18 Unspend Transaction Output

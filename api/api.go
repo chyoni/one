@@ -170,7 +170,7 @@ func balance(rw http.ResponseWriter, r *http.Request) {
 		utils.HandleErr(err)
 		fmt.Fprintf(rw, "%s", res)
 	case "":
-		txOuts := blockchain.GetTxOutByAddress(address)
+		txOuts := blockchain.GetUTxOutsByAddress(address)
 		rw.WriteHeader(http.StatusOK)
 		json.NewEncoder(rw).Encode(txOuts)
 	}

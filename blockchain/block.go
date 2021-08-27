@@ -77,7 +77,7 @@ func CreateBlock(prevHash string, height int) *Block {
 		Difficulty: GetCurrentDifficulty(BlockChain()),
 	}
 	b.Transactions = Mempool().TxToConfirm()
-	b.mine()
 	b.coinbaseTx()
+	b.mine()
 	return b
 }

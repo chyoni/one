@@ -1,7 +1,9 @@
 package blockchain
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/chiwon99881/one/db"
@@ -9,18 +11,28 @@ import (
 )
 
 type Tx struct {
+	TxID   string   `json:"txID"`
 	TxIns  []*TxIn  `json:"txIns"`
 	TxOuts []*TxOut `json:"txOuts"`
 }
 
 type TxIn struct {
+	TxID   string `json:"txID"`
+	Index  int    `json:"index"`
 	Amount int    `json:"amount"`
 	Owner  string `json:"owner"`
 }
 
 type TxOut struct {
 	Amount int    `json:"amount"`
-	Owner  string `json:"address"`
+	Owner  string `json:"owner"`
+}
+
+type UTxOut struct {
+	TxID   string `json:"txID"`
+	Index  int    `json:"index"`
+	Amount int    `json:"amount"`
+	Owner  string `json:"owner"`
 }
 
 type mempool struct {
@@ -41,27 +53,44 @@ func Txs() []*Tx {
 
 func GetBalanceByAddress(from string) int {
 	total := 0
-	for _, tx := range Txs() {
-		for _, txOut := range tx.TxOuts {
-			if txOut.Owner == from {
-				total += txOut.Amount
-			}
-		}
+	for _, uTxOut := range GetUTxOutsByAddress(from) {
+		total += uTxOut.Amount
 	}
 	return total
 }
 
-func GetTxOutByAddress(from string) []*TxOut {
-	var ownedTxOuts []*TxOut
+func GetUTxOutsByAddress(from string) []*UTxOut {
+	var ownedUTxOuts []*UTxOut
+	sTxOut := make(map[string]bool)
 	txs := Txs()
 	for _, tx := range txs {
-		for _, txOut := range tx.TxOuts {
+		for _, txIn := range tx.TxIns {
+			if txIn.Owner == from {
+				sTxOut[txIn.TxID] = true
+			}
+		}
+		for index, txOut := range tx.TxOuts {
 			if txOut.Owner == from {
-				ownedTxOuts = append(ownedTxOuts, txOut)
+				_, isTrue := sTxOut[tx.TxID]
+				if !isTrue {
+					uTxOut := &UTxOut{
+						TxID:   tx.TxID,
+						Index:  index,
+						Amount: txOut.Amount,
+						Owner:  txOut.Owner,
+					}
+					ownedUTxOuts = append(ownedUTxOuts, uTxOut)
+				}
 			}
 		}
 	}
-	return ownedTxOuts
+	return ownedUTxOuts
+}
+
+func (tx *Tx) generateTxID() {
+	IDAsBytes := utils.ToBytes(tx)
+	txID := fmt.Sprintf("%x", sha256.Sum256(IDAsBytes))
+	tx.TxID = txID
 }
 
 func makeTx(from, to string, amount int) (*Tx, error) {
@@ -71,16 +100,18 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	var txIns []*TxIn
 	var txOuts []*TxOut
 	var total int
-	for _, txOut := range GetTxOutByAddress(from) {
+	for _, uTxOut := range GetUTxOutsByAddress(from) {
 		if total >= amount {
 			break
 		}
 		shiftTxIn := &TxIn{
-			Owner:  txOut.Owner,
-			Amount: txOut.Amount,
+			Owner:  uTxOut.Owner,
+			Amount: uTxOut.Amount,
+			Index:  uTxOut.Index,
+			TxID:   uTxOut.TxID,
 		}
 		txIns = append(txIns, shiftTxIn)
-		total += txOut.Amount
+		total += uTxOut.Amount
 	}
 	toTxOut := &TxOut{
 		Owner:  to,
@@ -99,6 +130,7 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 		TxIns:  txIns,
 		TxOuts: txOuts,
 	}
+	tx.generateTxID()
 	return tx, nil
 }
 
@@ -126,6 +158,8 @@ func (b *Block) coinbaseTx() {
 	var txIns []*TxIn
 	var txOuts []*TxOut
 	txIn := &TxIn{
+		TxID:   "COINBASE",
+		Index:  -1,
 		Owner:  "COINBASE",
 		Amount: 50,
 	}
@@ -139,6 +173,9 @@ func (b *Block) coinbaseTx() {
 		TxIns:  txIns,
 		TxOuts: txOuts,
 	}
+	coinbaseTxAsBytes := utils.ToBytes(coinbaseTx)
+	coinbaseTxAsBytes = append(coinbaseTxAsBytes, utils.ToBytes(blockchain.Height)...)
+	coinbaseTx.TxID = fmt.Sprintf("%x", sha256.Sum256(coinbaseTxAsBytes))
 	b.Transactions = append(b.Transactions, coinbaseTx)
 }
 

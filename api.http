@@ -15,8 +15,8 @@ POST http://localhost:4000/transaction/add
 
 {
     "to": "jungyoon",
-    "amount": 50
+    "amount": 30
 }
 
 ###
-http://localhost:4000/balance/chyonee
+http://localhost:4000/balance/chyonee?total=true
