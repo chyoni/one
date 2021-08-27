@@ -31,3 +31,5 @@
 - #13 REST API Server Part 7 (transaction)
 
 - #14 Mempool database
+
+- #15 Mining Part 1

@@ -26,8 +26,8 @@ func restoreChain(data []byte) {
 	utils.FromBytes(blockchain, data)
 }
 
-func AddBlock(bc *chain, data string) {
-	block := CreateBlock(data, bc.NewestHash, bc.Height+1)
+func AddBlock(bc *chain) {
+	block := CreateBlock(bc.NewestHash, bc.Height+1)
 	persistBlock(block)
 	bc.persistChain(block)
 }
@@ -41,7 +41,7 @@ func BlockChain() *chain {
 			}
 			existChain := db.GetExistChain()
 			if existChain == nil {
-				AddBlock(blockchain, "one")
+				AddBlock(blockchain)
 			} else {
 				restoreChain(existChain)
 			}

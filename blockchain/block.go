@@ -1,8 +1,8 @@
 package blockchain
 
 import (
-	"crypto/sha256"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/chiwon99881/one/db"
@@ -10,13 +10,18 @@ import (
 )
 
 type Block struct {
-	Data         string `json:"data"`
+	Transactions []*Tx  `json:"transactions"`
 	Hash         string `json:"hash"`
 	PrevHash     string `json:"prevHash,omitempty"`
 	Height       int    `json:"height"`
 	Timestamp    int    `json:"-"`
-	Transactions []*Tx  `json:"transactions"`
+	Nouce        int    `json:"nounce"`
+	Difficulty   int    `json:"difficulty"`
 }
+
+const (
+	currentDifficulty int = 2
+)
 
 func Blocks(bc *chain) []*Block {
 	var blocks []*Block
@@ -49,22 +54,32 @@ func persistBlock(newBlock *Block) {
 	db.SaveBlockDB(newBlock.Hash, blockAsBytes)
 }
 
-func (b *Block) hash() {
-	blockAsBytes := utils.ToBytes(b)
-	bytes := sha256.Sum256(blockAsBytes)
-	hash := fmt.Sprintf("%x", bytes)
-	b.Hash = hash
+func (b *Block) mine() {
+	currentPreFix := strings.Repeat("0", currentDifficulty)
+	// mine reward
+	for {
+		hashAsBytes := utils.ToBytes(b)
+		hash := fmt.Sprintf("%x", hashAsBytes)
+		done := strings.HasPrefix(hash, currentPreFix)
+		if done {
+			b.Hash = hash
+			b.Timestamp = int(time.Now().Unix())
+			break
+		}
+		b.Nouce++
+	}
 }
 
 // CreateBlock is generate new block.
-func CreateBlock(data, prevHash string, height int) *Block {
+func CreateBlock(prevHash string, height int) *Block {
 	b := &Block{
-		Hash:      "",
-		Data:      data,
-		PrevHash:  prevHash,
-		Height:    height,
-		Timestamp: int(time.Now().Unix()),
+		Hash:       "",
+		PrevHash:   prevHash,
+		Height:     height,
+		Nouce:      0,
+		Difficulty: currentDifficulty,
 	}
-	b.hash()
+	b.Transactions = m.TxToConfirm()
+	b.mine()
 	return b
 }

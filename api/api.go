@@ -132,7 +132,7 @@ func addBlock(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
 	}
-	blockchain.AddBlock(blockchain.BlockChain(), bodyData.Data)
+	blockchain.AddBlock(blockchain.BlockChain())
 	rw.WriteHeader(http.StatusCreated)
 }
 
