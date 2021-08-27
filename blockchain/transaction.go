@@ -3,6 +3,9 @@ package blockchain
 import (
 	"errors"
 	"sync"
+
+	"github.com/chiwon99881/one/db"
+	"github.com/chiwon99881/one/utils"
 )
 
 type Tx struct {
@@ -105,6 +108,8 @@ func (m *mempool) AddTx(to string, amount int) error {
 		return err
 	}
 	m.Txs = append(m.Txs, tx)
+	mBytes := utils.ToBytes(m)
+	db.PushOnMempool(mBytes)
 	return nil
 }
 
@@ -112,6 +117,8 @@ func (m *mempool) TxToConfirm() []*Tx {
 	var txs []*Tx
 	txs = append(txs, m.Txs...)
 	m.Txs = nil
+	mBytes := utils.ToBytes(m)
+	db.PushOnMempool(mBytes)
 	return txs
 }
 
@@ -119,6 +126,10 @@ func Mempool() *mempool {
 	if m == nil {
 		memOnce.Do(func() {
 			m = &mempool{}
+			memData := db.GetExistMempool()
+			if memData != nil {
+				utils.FromBytes(m, memData)
+			}
 		})
 	}
 	return m
