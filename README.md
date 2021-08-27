@@ -41,3 +41,5 @@
 - #18 Unspend Transaction Output
 
 - #19 isOnMempool Part 1
+
+- #20 isOnMempool DONE

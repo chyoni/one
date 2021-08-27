@@ -63,6 +63,7 @@ func GetUTxOutsByAddress(from string) []*UTxOut {
 	var ownedUTxOuts []*UTxOut
 	sTxOut := make(map[string]bool)
 	txs := Txs()
+	txs = append(txs, m.Txs...)
 	for _, tx := range txs {
 		for _, txIn := range tx.TxIns {
 			if txIn.Owner == from {
@@ -139,7 +140,10 @@ func (m *mempool) AddTx(to string, amount int) error {
 	if err != nil {
 		return err
 	}
-	m.Txs = append(m.Txs, tx)
+	var newestTxs []*Tx
+	newestTxs = append(newestTxs, tx)
+	newestTxs = append(newestTxs, m.Txs...)
+	m.Txs = newestTxs
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
 	return nil
