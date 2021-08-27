@@ -35,3 +35,5 @@
 - #15 Mining Part 1
 
 - #16 Mining Part 2
+
+- #17 Mining DONE

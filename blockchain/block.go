@@ -16,13 +16,9 @@ type Block struct {
 	PrevHash     string `json:"prevHash,omitempty"`
 	Height       int    `json:"height"`
 	Timestamp    int    `json:"-"`
-	Nouce        int    `json:"nounce"`
+	Nounce       int    `json:"nounce"`
 	Difficulty   int    `json:"difficulty"`
 }
-
-const (
-	currentDifficulty int = 2
-)
 
 func Blocks(bc *chain) []*Block {
 	var blocks []*Block
@@ -56,18 +52,18 @@ func persistBlock(newBlock *Block) {
 }
 
 func (b *Block) mine() {
-	currentPreFix := strings.Repeat("0", currentDifficulty)
+	currentPreFix := strings.Repeat("0", b.Difficulty)
 	for {
 		hashAsBytes := utils.ToBytes(b)
 		hash := fmt.Sprintf("%x", sha256.Sum256(hashAsBytes))
-		fmt.Printf("Hash:%s\nNounce:%d\nCurrentDifficulty:%s\n", hash, b.Nouce, currentPreFix)
+		fmt.Printf("Hash:%s\nNounce:%d\nCurrentDifficulty:%s\n", hash, b.Nounce, currentPreFix)
 		done := strings.HasPrefix(hash, currentPreFix)
 		if done {
 			b.Hash = hash
 			b.Timestamp = int(time.Now().Unix())
 			break
 		}
-		b.Nouce++
+		b.Nounce++
 	}
 }
 
@@ -77,8 +73,8 @@ func CreateBlock(prevHash string, height int) *Block {
 		Hash:       "",
 		PrevHash:   prevHash,
 		Height:     height,
-		Nouce:      0,
-		Difficulty: currentDifficulty,
+		Nounce:     0,
+		Difficulty: GetCurrentDifficulty(BlockChain()),
 	}
 	b.Transactions = Mempool().TxToConfirm()
 	b.mine()
