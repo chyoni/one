@@ -51,7 +51,7 @@ func GetBalanceByAddress(from string) int {
 	return total
 }
 
-func getTxOutByAddress(from string) []*TxOut {
+func GetTxOutByAddress(from string) []*TxOut {
 	var ownedTxOuts []*TxOut
 	txs := Txs()
 	for _, tx := range txs {
@@ -71,7 +71,7 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	var txIns []*TxIn
 	var txOuts []*TxOut
 	var total int
-	for _, txOut := range getTxOutByAddress(from) {
+	for _, txOut := range GetTxOutByAddress(from) {
 		if total >= amount {
 			break
 		}
@@ -120,6 +120,26 @@ func (m *mempool) TxToConfirm() []*Tx {
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
 	return txs
+}
+
+func (b *Block) coinbaseTx() {
+	var txIns []*TxIn
+	var txOuts []*TxOut
+	txIn := &TxIn{
+		Owner:  "COINBASE",
+		Amount: 50,
+	}
+	txOut := &TxOut{
+		Owner:  "chyonee",
+		Amount: 50,
+	}
+	txIns = append(txIns, txIn)
+	txOuts = append(txOuts, txOut)
+	coinbaseTx := &Tx{
+		TxIns:  txIns,
+		TxOuts: txOuts,
+	}
+	b.Transactions = append(b.Transactions, coinbaseTx)
 }
 
 func Mempool() *mempool {

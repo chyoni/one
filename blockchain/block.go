@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strings"
 	"time"
@@ -56,10 +57,10 @@ func persistBlock(newBlock *Block) {
 
 func (b *Block) mine() {
 	currentPreFix := strings.Repeat("0", currentDifficulty)
-	// mine reward
 	for {
 		hashAsBytes := utils.ToBytes(b)
-		hash := fmt.Sprintf("%x", hashAsBytes)
+		hash := fmt.Sprintf("%x", sha256.Sum256(hashAsBytes))
+		fmt.Printf("Hash:%s\nNounce:%d\nCurrentDifficulty:%s\n", hash, b.Nouce, currentPreFix)
 		done := strings.HasPrefix(hash, currentPreFix)
 		if done {
 			b.Hash = hash
@@ -79,7 +80,8 @@ func CreateBlock(prevHash string, height int) *Block {
 		Nouce:      0,
 		Difficulty: currentDifficulty,
 	}
-	b.Transactions = m.TxToConfirm()
+	b.Transactions = Mempool().TxToConfirm()
 	b.mine()
+	b.coinbaseTx()
 	return b
 }

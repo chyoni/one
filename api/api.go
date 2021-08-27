@@ -21,13 +21,14 @@ type errResponse struct {
 	ErrMessage string `json:"errMessage"`
 }
 
-type addBlockPayload struct {
-	Data string `json:"data"`
-}
-
 type addTransactionPayload struct {
 	To     string `json:"to"`
 	Amount int    `json:"amount"`
+}
+
+type BalanceResponse struct {
+	Address string `json:"address"`
+	Balance int    `json:"balance"`
 }
 
 type urlDescription struct {
@@ -77,6 +78,11 @@ func home(rw http.ResponseWriter, r *http.Request) {
 			Method:      "POST",
 			Description: "Add a transaction to mempool",
 		},
+		{
+			URL:         URL("/balance/{address}?total=true"),
+			Method:      "GET",
+			Description: "See who's balance. If you give total querystring, total balance return.",
+		},
 	}
 	marshalToJSON, err := json.Marshal(url)
 	if err != nil {
@@ -124,14 +130,6 @@ func block(rw http.ResponseWriter, r *http.Request) {
 }
 
 func addBlock(rw http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	bodyData := &addBlockPayload{}
-	err := json.NewDecoder(r.Body).Decode(bodyData)
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
-		return
-	}
 	blockchain.AddBlock(blockchain.BlockChain())
 	rw.WriteHeader(http.StatusCreated)
 }
@@ -153,6 +151,28 @@ func mempool(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
+	}
+}
+
+func balance(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	address, exist := vars["address"]
+	if !exist {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: "no address has been given."})
+		return
+	}
+	switch r.URL.Query().Get("total") {
+	case "true":
+		balance := blockchain.GetBalanceByAddress(address)
+		rw.WriteHeader(http.StatusOK)
+		res, err := json.Marshal(BalanceResponse{Address: address, Balance: balance})
+		utils.HandleErr(err)
+		fmt.Fprintf(rw, "%s", res)
+	case "":
+		txOuts := blockchain.GetTxOutByAddress(address)
+		rw.WriteHeader(http.StatusOK)
+		json.NewEncoder(rw).Encode(txOuts)
 	}
 }
 
@@ -192,6 +212,7 @@ func Start(aPort string) {
 	router.HandleFunc("/block", addBlock).Methods("POST")
 	router.HandleFunc("/blockchain", chainStatus).Methods("GET")
 	router.HandleFunc("/mempool", mempool).Methods("GET")
+	router.HandleFunc("/balance/{address}", balance).Methods("GET")
 	router.HandleFunc("/transaction/add", addTx).Methods("POST")
 	utils.HandleErr(http.ListenAndServe(":4000", router))
 }

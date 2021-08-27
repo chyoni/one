@@ -40,9 +40,7 @@ func BlockChain() *chain {
 				NewestHash: "",
 			}
 			existChain := db.GetExistChain()
-			if existChain == nil {
-				AddBlock(blockchain)
-			} else {
+			if existChain != nil {
 				restoreChain(existChain)
 			}
 		})
