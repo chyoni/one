@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
@@ -25,12 +26,51 @@ const (
 var w *wallet
 var once sync.Once
 
+func Sign(payload interface{}) string {
+	//paylaod는 tx.ID가 될 것이다.
+	payloadAsBytes := utils.ToBytes(payload)
+	r, s, err := ecdsa.Sign(rand.Reader, &w.privateKey, payloadAsBytes)
+	utils.HandleErr(err)
+	rBytes := r.Bytes()
+	sBytes := s.Bytes()
+	rBytes = append(rBytes, sBytes...)
+	hexSignature := fmt.Sprintf("%x", rBytes)
+	return hexSignature
+}
+
+func Verify(publicKeyAsString, hexSignature, txIDAsPayload string) bool {
+	x, y := bytesToBigInt(publicKeyAsString)
+	publicKey := &ecdsa.PublicKey{
+		Curve: elliptic.P256(),
+		X:     x,
+		Y:     y,
+	}
+	payloadAsBytes := utils.ToBytes(txIDAsPayload)
+	r, s := bytesToBigInt(hexSignature)
+	verified := ecdsa.Verify(publicKey, payloadAsBytes, r, s)
+	return verified
+}
+
 func bigIntToBytes(aBig, bBig big.Int) string {
 	aBytes := aBig.Bytes()
 	bBytes := bBig.Bytes()
 	aBytes = append(aBytes, bBytes...)
 	bytesAsHex := fmt.Sprintf("%x", aBytes)
 	return bytesAsHex
+}
+
+func bytesToBigInt(data string) (*big.Int, *big.Int) {
+	dataAsBytes, err := hex.DecodeString(data)
+	utils.HandleErr(err)
+
+	aBytes := dataAsBytes[:len(dataAsBytes)/2]
+	bBytes := dataAsBytes[len(dataAsBytes)/2:]
+
+	aBig, bBig := &big.Int{}, &big.Int{}
+	aBig.SetBytes(aBytes)
+	bBig.SetBytes(bBytes)
+
+	return aBig, bBig
 }
 
 func hasPrivateKeyFile() bool {

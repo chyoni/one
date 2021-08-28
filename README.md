@@ -47,3 +47,5 @@
 - #21 CLI
 
 - #22 Wallet Part 1 (generate privateKey)
+
+- #23 Wallet Part 2 (Sign, Verify func)
