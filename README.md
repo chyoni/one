@@ -45,3 +45,5 @@
 - #20 isOnMempool DONE
 
 - #21 CLI
+
+- #22 Wallet Part 1 (generate privateKey)

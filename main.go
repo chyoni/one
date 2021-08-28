@@ -1,11 +1,14 @@
 package main
 
 import (
-	"github.com/chiwon99881/one/cli"
-	"github.com/chiwon99881/one/db"
+	"fmt"
+
+	"github.com/chiwon99881/one/wallet"
 )
 
 func main() {
-	cli.Start()
-	defer db.Close()
+	// cli.Start()
+	// defer db.Close()
+	w := wallet.Wallet()
+	fmt.Println(w.Address)
 }
