@@ -43,3 +43,5 @@
 - #19 isOnMempool Part 1
 
 - #20 isOnMempool DONE
+
+- #21 CLI

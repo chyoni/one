@@ -11,7 +11,7 @@ import (
 )
 
 func (u URL) MarshalText() (text []byte, err error) {
-	marshalURL := fmt.Sprintf("http://localhost:%s%s", port, u)
+	marshalURL := fmt.Sprintf("http://localhost:%d%s", port, u)
 	return []byte(marshalURL), nil
 }
 
@@ -38,7 +38,7 @@ type urlDescription struct {
 	Payload     string `json:"payload,omitempty"`
 }
 
-var port string
+var port int
 
 func home(rw http.ResponseWriter, r *http.Request) {
 	url := []urlDescription{
@@ -201,9 +201,9 @@ func JSONHeaderMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func Start(aPort string) {
+func Start(aPort int) {
 	port = aPort
-	fmt.Printf("Server listening on http://localhost:%s\n", port)
+	fmt.Printf("Server listening on http://localhost:%d\n", port)
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(JSONHeaderMiddleware)
 	router.HandleFunc("/", home).Methods("GET")
@@ -214,5 +214,5 @@ func Start(aPort string) {
 	router.HandleFunc("/mempool", mempool).Methods("GET")
 	router.HandleFunc("/balance/{address}", balance).Methods("GET")
 	router.HandleFunc("/transaction/add", addTx).Methods("POST")
-	utils.HandleErr(http.ListenAndServe(":4000", router))
+	utils.HandleErr(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
