@@ -8,6 +8,7 @@ import (
 
 	"github.com/chiwon99881/one/db"
 	"github.com/chiwon99881/one/utils"
+	"github.com/chiwon99881/one/wallet"
 )
 
 type Tx struct {
@@ -17,22 +18,22 @@ type Tx struct {
 }
 
 type TxIn struct {
-	TxID   string `json:"txID"`
-	Index  int    `json:"index"`
-	Amount int    `json:"amount"`
-	Owner  string `json:"owner"`
+	TxID      string `json:"txID"`
+	Index     int    `json:"index"`
+	Amount    int    `json:"amount"`
+	Signature string `json:"signature"`
 }
 
 type TxOut struct {
-	Amount int    `json:"amount"`
-	Owner  string `json:"owner"`
+	Amount  int    `json:"amount"`
+	Address string `json:"address"`
 }
 
 type UTxOut struct {
-	TxID   string `json:"txID"`
-	Index  int    `json:"index"`
-	Amount int    `json:"amount"`
-	Owner  string `json:"owner"`
+	TxID    string `json:"txID"`
+	Index   int    `json:"index"`
+	Amount  int    `json:"amount"`
+	Address string `json:"address"`
 }
 
 type mempool struct {
@@ -51,34 +52,47 @@ func Txs() []*Tx {
 	return txs
 }
 
-func GetBalanceByAddress(from string) int {
+func FindTx(txID string) *Tx {
+	txs := Txs()
+	for _, tx := range txs {
+		if tx.TxID == txID {
+			return tx
+		}
+	}
+	return nil
+}
+
+func GetBalanceByAddress(address string) int {
 	total := 0
-	for _, uTxOut := range GetUTxOutsByAddress(from) {
+	for _, uTxOut := range GetUTxOutsByAddress(address) {
 		total += uTxOut.Amount
 	}
 	return total
 }
 
-func GetUTxOutsByAddress(from string) []*UTxOut {
+func GetUTxOutsByAddress(address string) []*UTxOut {
 	var ownedUTxOuts []*UTxOut
 	sTxOut := make(map[string]bool)
 	txs := Txs()
 	txs = append(txs, m.Txs...)
 	for _, tx := range txs {
 		for _, txIn := range tx.TxIns {
-			if txIn.Owner == from {
+			if txIn.Signature == "COINBASE" {
+				break
+			}
+			if FindTx(txIn.TxID).TxOuts[txIn.Index].Address == address {
 				sTxOut[txIn.TxID] = true
 			}
 		}
 		for index, txOut := range tx.TxOuts {
-			if txOut.Owner == from {
+			if txOut.Address == address {
 				_, isTrue := sTxOut[tx.TxID]
-				if !isTrue && !isOnMempool(tx.TxID, from) {
+				if !isTrue && !isOnMempool(tx.TxID, address) {
 					uTxOut := &UTxOut{
-						TxID:   tx.TxID,
-						Index:  index,
-						Amount: txOut.Amount,
-						Owner:  txOut.Owner,
+						TxID:    tx.TxID,
+						Index:   index,
+						Amount:  txOut.Amount,
+						Address: txOut.Address,
 					}
 					ownedUTxOuts = append(ownedUTxOuts, uTxOut)
 				}
@@ -94,6 +108,21 @@ func (tx *Tx) generateTxID() {
 	tx.TxID = txID
 }
 
+func (tx *Tx) verifyTx() bool {
+	for _, txIn := range tx.TxIns {
+		tx := FindTx(txIn.TxID)
+		if tx == nil {
+			return false
+		}
+		publicKey := tx.TxOuts[txIn.Index].Address
+		verified := wallet.Verify(publicKey, txIn.Signature, txIn.TxID)
+		if !verified {
+			return false
+		}
+	}
+	return true
+}
+
 func makeTx(from, to string, amount int) (*Tx, error) {
 	if GetBalanceByAddress(from) < amount {
 		return nil, errors.New("not enough money")
@@ -106,24 +135,24 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 			break
 		}
 		shiftTxIn := &TxIn{
-			Owner:  uTxOut.Owner,
-			Amount: uTxOut.Amount,
-			Index:  uTxOut.Index,
-			TxID:   uTxOut.TxID,
+			Amount:    uTxOut.Amount,
+			Index:     uTxOut.Index,
+			TxID:      uTxOut.TxID,
+			Signature: wallet.Sign(uTxOut.TxID),
 		}
 		txIns = append(txIns, shiftTxIn)
 		total += uTxOut.Amount
 	}
 	toTxOut := &TxOut{
-		Owner:  to,
-		Amount: amount,
+		Address: to,
+		Amount:  amount,
 	}
 	txOuts = append(txOuts, toTxOut)
 	if total >= amount {
 		exchange := total - amount
 		exchangeTxOut := &TxOut{
-			Owner:  from,
-			Amount: exchange,
+			Address: from,
+			Amount:  exchange,
 		}
 		txOuts = append(txOuts, exchangeTxOut)
 	}
@@ -132,11 +161,15 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 		TxOuts: txOuts,
 	}
 	tx.generateTxID()
+	result := tx.verifyTx()
+	if !result {
+		return nil, errors.New("this signature invalid")
+	}
 	return tx, nil
 }
 
 func (m *mempool) AddTx(to string, amount int) error {
-	tx, err := makeTx("chyonee", to, amount)
+	tx, err := makeTx(wallet.Wallet().Address, to, amount)
 	if err != nil {
 		return err
 	}
@@ -158,12 +191,12 @@ func (m *mempool) TxToConfirm() []*Tx {
 	return txs
 }
 
-func isOnMempool(txID, owner string) bool {
+func isOnMempool(txID, address string) bool {
 	isOn := false
 Outer:
 	for _, tx := range m.Txs {
 		for _, txIn := range tx.TxIns {
-			if txIn.TxID == txID && txIn.Owner == owner {
+			if txIn.TxID == txID && FindTx(txIn.TxID).TxOuts[txIn.Index].Address == address {
 				isOn = true
 				break Outer
 			}
@@ -176,14 +209,14 @@ func (b *Block) coinbaseTx() {
 	var txIns []*TxIn
 	var txOuts []*TxOut
 	txIn := &TxIn{
-		TxID:   "COINBASE",
-		Index:  -1,
-		Owner:  "COINBASE",
-		Amount: 50,
+		TxID:      "COINBASE",
+		Index:     -1,
+		Amount:    50,
+		Signature: "COINBASE",
 	}
 	txOut := &TxOut{
-		Owner:  "chyonee",
-		Amount: 50,
+		Address: wallet.Wallet().Address,
+		Amount:  50,
 	}
 	txIns = append(txIns, txIn)
 	txOuts = append(txOuts, txOut)

@@ -49,3 +49,5 @@
 - #22 Wallet Part 1 (generate privateKey)
 
 - #23 Wallet Part 2 (Sign, Verify func)
+
+- #24 Wallet Part DONE
