@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/chiwon99881/one/blockchain"
+	"github.com/chiwon99881/one/p2p"
 	"github.com/chiwon99881/one/utils"
 	"github.com/gorilla/mux"
 )
@@ -29,6 +30,11 @@ type addTransactionPayload struct {
 type BalanceResponse struct {
 	Address string `json:"address"`
 	Balance int    `json:"balance"`
+}
+
+type addPeerPayload struct {
+	Addr string `json:"addr"`
+	Port string `json:"port"`
 }
 
 type urlDescription struct {
@@ -194,9 +200,29 @@ func addTx(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusCreated)
 }
 
+func addPeer(rw http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	var addPeerPayload addPeerPayload
+	err := json.NewDecoder(r.Body).Decode(&addPeerPayload)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+	p2p.ConnectPeer(addPeerPayload.Addr, addPeerPayload.Port, port)
+}
+
 func JSONHeaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -206,6 +232,7 @@ func Start(aPort int) {
 	fmt.Printf("Server listening on http://localhost:%d\n", port)
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(JSONHeaderMiddleware)
+	router.Use(loggerMiddleware)
 	router.HandleFunc("/", home).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET")
 	router.HandleFunc("/block/{block_hash}", block).Methods("GET")
@@ -214,5 +241,7 @@ func Start(aPort int) {
 	router.HandleFunc("/mempool", mempool).Methods("GET")
 	router.HandleFunc("/balance/{address}", balance).Methods("GET")
 	router.HandleFunc("/transaction/add", addTx).Methods("POST")
+	router.HandleFunc("/ws", p2p.Upgrade).Methods("GET")
+	router.HandleFunc("/peer", addPeer).Methods("POST")
 	utils.HandleErr(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }

@@ -51,3 +51,5 @@
 - #23 Wallet Part 2 (Sign, Verify func)
 
 - #24 Wallet Part DONE
+
+- #25 P2P Part 1 (websocket upgrade and connection between node to node)

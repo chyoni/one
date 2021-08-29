@@ -15,8 +15,16 @@ POST http://localhost:4000/transaction/add
 
 {
     "to": "jungyoon",
-    "amount": 20
+    "amount": 50
 }
 
 ###
-http://localhost:4000/balance/chyonee
+POST http://localhost:4000/peer
+
+{
+    "addr": "127.0.0.1",
+    "port": "3000"
+}
+
+###
+http://localhost:4000/balance/b230c82819703848a57e9aad9834b8dac21845384493bbbd4512f11afd0f284195dd20bf3bc3076cba8b8c411d8bce0abe8c56ba2f36a030eb18c37640f0aa7d
