@@ -53,3 +53,5 @@
 - #24 Wallet Part DONE
 
 - #25 P2P Part 1 (websocket upgrade and connection between node to node)
+
+- #26 P2P Part 2 (who connected with me)

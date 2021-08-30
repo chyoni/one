@@ -213,6 +213,16 @@ func addPeer(rw http.ResponseWriter, r *http.Request) {
 	p2p.ConnectPeer(addPeerPayload.Addr, addPeerPayload.Port, port)
 }
 
+func myPeer(rw http.ResponseWriter, r *http.Request) {
+	rw.WriteHeader(http.StatusOK)
+	err := p2p.AllPeers(rw)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
+		return
+	}
+}
+
 func JSONHeaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
@@ -243,5 +253,6 @@ func Start(aPort int) {
 	router.HandleFunc("/transaction/add", addTx).Methods("POST")
 	router.HandleFunc("/ws", p2p.Upgrade).Methods("GET")
 	router.HandleFunc("/peer", addPeer).Methods("POST")
+	router.HandleFunc("/myPeer", myPeer).Methods("GET")
 	utils.HandleErr(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }

@@ -21,17 +21,19 @@ func Upgrade(rw http.ResponseWriter, r *http.Request) {
 		}
 		return true
 	}
-	fmt.Println(remotePort, addrSlice[0])
-	_, err := upgrader.Upgrade(rw, r, nil)
+	conn, err := upgrader.Upgrade(rw, r, nil)
 	if err != nil {
 		utils.HandleErr(err)
 	}
+	fmt.Printf("from %s:%s want to upgrade\n", addrSlice[0], remotePort)
+	initPeer(conn, addrSlice[0], remotePort)
 }
 
 func ConnectPeer(addr, port string, remotePort int) {
-	_, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?remotePort=%d", addr, port, remotePort), nil)
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?remotePort=%d", addr, port, remotePort), nil)
 	if err != nil {
 		utils.HandleErr(err)
 	}
+	initPeer(conn, addr, port)
 	fmt.Printf("Request to %s:%s for upgrade\n", addr, port)
 }
