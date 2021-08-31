@@ -34,6 +34,7 @@ func ConnectPeer(addr, port string, remotePort int) {
 	if err != nil {
 		utils.HandleErr(err)
 	}
-	initPeer(conn, addr, port)
 	fmt.Printf("Request to %s:%s for upgrade\n", addr, port)
+	peer := initPeer(conn, addr, port)
+	peer.sendAllBlock()
 }

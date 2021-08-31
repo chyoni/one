@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"log"
 )
 
@@ -23,4 +24,17 @@ func ToBytes(i interface{}) []byte {
 func FromBytes(i interface{}, data []byte) {
 	dec := gob.NewDecoder(bytes.NewReader(data))
 	HandleErr(dec.Decode(i))
+}
+
+func EncodeAsJSON(v interface{}) ([]byte, error) {
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
+}
+
+func DecodeAsJSON(v interface{}, data []byte) error {
+	err := json.Unmarshal(data, v)
+	return err
 }
