@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/chiwon99881/one/utils"
 	"github.com/gorilla/websocket"
 )
 
@@ -18,7 +19,8 @@ type peer struct {
 	conn  *websocket.Conn
 	Addr  string `json:"addr"`
 	Port  string `json:"port"`
-	inbox chan interface{}
+	Key   string `json:"key"`
+	inbox chan []byte
 }
 
 var Peers *peers = &peers{
@@ -42,7 +44,7 @@ func (p *peer) read() {
 			// delete peer
 			return
 		}
-		//BroadcastMessage(message.MessageKind, message.Payload)
+		BroadcastMessage(message.MessageKind, message.Payload, p)
 	}
 }
 
@@ -54,7 +56,9 @@ func (p *peer) write() {
 			// delete peer
 			return
 		}
-		err := p.conn.WriteJSON(m)
+		message := &Message{}
+		utils.FromBytes(message, m)
+		err := p.conn.WriteJSON(message)
 		if err != nil {
 			defer p.conn.Close()
 			// delete peer
@@ -71,7 +75,8 @@ func initPeer(conn *websocket.Conn, addr, port string) *peer {
 		conn:  conn,
 		Addr:  addr,
 		Port:  port,
-		inbox: make(chan interface{}),
+		Key:   key,
+		inbox: make(chan []byte),
 	}
 	Peers.P[key] = peer
 	go peer.read()

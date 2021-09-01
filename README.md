@@ -57,3 +57,5 @@
 - #26 P2P Part 2 (who connected with me)
 
 - #27 P2P Part 3 (read and write)
+
+- #28 P2P Part 4 (send message and seperate database by node)

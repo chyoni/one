@@ -1,12 +1,16 @@
 package db
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/chiwon99881/one/utils"
 	bolt "go.etcd.io/bbolt"
 )
 
 const (
-	dbName        string = "onecoin.db"
 	chainBucket   string = "chainBucket"
 	blockBucket   string = "blockBucket"
 	mempoolBucket string = "mempoolBucket"
@@ -16,9 +20,25 @@ const (
 
 var db *bolt.DB
 
+func getPort() (string, error) {
+	var port string
+	for _, flag := range os.Args {
+		if strings.Contains(flag, "-port") {
+			data := strings.Split(flag, "=")
+			port = data[1]
+			return port, nil
+		}
+	}
+	return "", errors.New("port is undefined")
+}
+
 func DB() *bolt.DB {
 	if db == nil {
-		dbPointer, err := bolt.Open(dbName, 0600, nil)
+		port, err := getPort()
+		if err != nil {
+			utils.HandleErr(err)
+		}
+		dbPointer, err := bolt.Open(fmt.Sprintf("onecoin-%s.db", port), 0600, nil)
 		db = dbPointer
 		utils.HandleErr(err)
 		err = db.Update(func(t *bolt.Tx) error {
