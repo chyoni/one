@@ -23,6 +23,10 @@ type peer struct {
 	inbox chan []byte
 }
 
+type allPeersResponse struct {
+	Peers []string `json:"peers"`
+}
+
 var Peers *peers = &peers{
 	P: make(map[string]*peer),
 }
@@ -30,18 +34,24 @@ var Peers *peers = &peers{
 func AllPeers(rw http.ResponseWriter) error {
 	Peers.m.Lock()
 	defer Peers.m.Unlock()
-	err := json.NewEncoder(rw).Encode(Peers.P)
+
+	allPeersResponse := &allPeersResponse{}
+	for key := range Peers.P {
+		allPeersResponse.Peers = append(allPeersResponse.Peers, key)
+	}
+	err := json.NewEncoder(rw).Encode(allPeersResponse)
 	return err
 }
 
 func (p *peer) read() {
+	defer Peers.m.Unlock()
 	for {
 		message := &Message{}
 		err := p.conn.ReadJSON(message)
 		if err != nil {
-			fmt.Println(err.Error())
+			Peers.m.Lock()
 			defer p.conn.Close()
-			// delete peer
+			delete(Peers.P, p.Key)
 			return
 		}
 		BroadcastMessage(message.MessageKind, message.Payload, p)
@@ -49,19 +59,22 @@ func (p *peer) read() {
 }
 
 func (p *peer) write() {
+	defer Peers.m.Unlock()
 	for {
 		m, ok := <-p.inbox
 		if !ok {
+			Peers.m.Lock()
 			defer p.conn.Close()
-			// delete peer
+			delete(Peers.P, p.Key)
 			return
 		}
 		message := &Message{}
 		utils.FromBytes(message, m)
 		err := p.conn.WriteJSON(message)
 		if err != nil {
+			Peers.m.Lock()
 			defer p.conn.Close()
-			// delete peer
+			delete(Peers.P, p.Key)
 			return
 		}
 	}

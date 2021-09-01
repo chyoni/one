@@ -59,3 +59,5 @@
 - #27 P2P Part 3 (read and write)
 
 - #28 P2P Part 4 (send message and seperate database by node)
+
+- #29 P2P Part 5 (when disconnection occur, delete peer and fix data races)
