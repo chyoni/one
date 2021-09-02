@@ -16,6 +16,8 @@ type Message struct {
 
 const (
 	SendNewestBlockMessage MessageKind = iota
+	RequestAllBlocksMessage
+	SendAllBlocksMessage
 )
 
 func (p *peer) sendNewestBlock() {
@@ -34,6 +36,29 @@ func (p *peer) sendNewestBlock() {
 	p.inbox <- mBytes
 }
 
+func (p *peer) requestAllBlocks() {
+	m := &Message{}
+
+	m.MessageKind = RequestAllBlocksMessage
+	mBytes := utils.ToBytes(m)
+
+	p.inbox <- mBytes
+}
+
+func (p *peer) sendAllBlocks() {
+	m := &Message{}
+	blocks := blockchain.Blocks(blockchain.BlockChain())
+
+	m.MessageKind = SendAllBlocksMessage
+	blocksAsJSON, err := utils.EncodeAsJSON(blocks)
+	if err != nil {
+		utils.HandleErr(err)
+	}
+	m.Payload = blocksAsJSON
+	mBytes := utils.ToBytes(m)
+	p.inbox <- mBytes
+}
+
 func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 	switch kind {
 	case SendNewestBlockMessage:
@@ -45,17 +70,30 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 		}
 		myChain := blockchain.BlockChain()
 		if block.Height > myChain.Height {
-			fmt.Printf("I want to get all blocks of %s", p.Key)
-			// RequestAllBlocksMessage
+			fmt.Printf("I want to get all blocks of %s\n", p.Key)
+			p.requestAllBlocks()
 			break
 		} else if block.Height < myChain.Height {
-			fmt.Printf("Send my all blocks to %s", p.Key)
+			fmt.Printf("Send my all blocks to %s\n", p.Key)
 			p.sendNewestBlock()
 			break
 		} else {
-			fmt.Printf("we are same blockchain 🤘")
+			fmt.Printf("we are same blockchain 🤘\n")
 			break
 		}
+	case RequestAllBlocksMessage:
+		fmt.Printf("I've sending all blocks to %s\n", p.Key)
+		p.sendAllBlocks()
+	case SendAllBlocksMessage:
+		fmt.Printf("I Received all blocks from %s\n\n", p.Key)
+		blocks := []*blockchain.Block{}
+		err := utils.DecodeAsJSON(&blocks, payload)
+		if err != nil {
+			fmt.Println(err.Error())
+			break
+		}
+		fmt.Printf("%v", blocks)
+		//handleSendAllBlocksMessage(blocks)
 	default:
 		break
 	}
