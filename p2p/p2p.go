@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/chiwon99881/one/blockchain"
+	"github.com/chiwon99881/one/db"
 	"github.com/chiwon99881/one/utils"
 	"github.com/gorilla/websocket"
 )
@@ -38,4 +40,22 @@ func ConnectPeer(addr, port string, remotePort int) {
 	peer := initPeer(conn, addr, port)
 	fmt.Printf("Sending my all blocks to %s:%s when first connection\n\n", addr, port)
 	peer.sendNewestBlock()
+}
+
+func handleSendAllBlocksMessage(blocks []*blockchain.Block) {
+	newestBlock := blocks[0]
+	chain := blockchain.BlockChain()
+
+	chain.CurrentDifficulty = newestBlock.Difficulty
+	chain.Height = newestBlock.Height
+	chain.NewestHash = newestBlock.Hash
+
+	chainAsBytes := utils.ToBytes(chain)
+
+	db.CreateAfterDeleteDB()
+	db.SaveChainDB(chainAsBytes)
+	for _, block := range blocks {
+		blockAsBytes := utils.ToBytes(block)
+		db.SaveBlockDB(block.Hash, blockAsBytes)
+	}
 }

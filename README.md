@@ -63,3 +63,5 @@
 - #29 P2P Part 5 (when disconnection occur, delete peer and fix data races)
 
 - #30 P2P Part 6 (request all blocks message and send all blocks message)
+
+- #31 P2P Part 7 (synchronized blockchain between peer to peer)

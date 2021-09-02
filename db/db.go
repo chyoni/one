@@ -119,3 +119,17 @@ func FindBlock(hash string) []byte {
 	})
 	return blockAsBytes
 }
+
+func CreateAfterDeleteDB() {
+	DB().Update(func(t *bolt.Tx) error {
+		err := t.DeleteBucket([]byte(chainBucket))
+		utils.HandleErr(err)
+		err = t.DeleteBucket([]byte(blockBucket))
+		utils.HandleErr(err)
+		_, err = t.CreateBucket([]byte(chainBucket))
+		utils.HandleErr(err)
+		_, err = t.CreateBucket([]byte(blockBucket))
+		utils.HandleErr(err)
+		return nil
+	})
+}

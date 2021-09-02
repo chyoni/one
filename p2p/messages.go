@@ -26,9 +26,7 @@ func (p *peer) sendNewestBlock() {
 	chain := blockchain.BlockChain()
 	block := blockchain.FindBlock(chain.NewestHash)
 	blockAsJSON, err := utils.EncodeAsJSON(block)
-	if err != nil {
-		utils.HandleErr(err)
-	}
+	utils.HandleErr(err)
 	m.MessageKind = SendNewestBlockMessage
 	m.Payload = blockAsJSON
 
@@ -51,9 +49,7 @@ func (p *peer) sendAllBlocks() {
 
 	m.MessageKind = SendAllBlocksMessage
 	blocksAsJSON, err := utils.EncodeAsJSON(blocks)
-	if err != nil {
-		utils.HandleErr(err)
-	}
+	utils.HandleErr(err)
 	m.Payload = blocksAsJSON
 	mBytes := utils.ToBytes(m)
 	p.inbox <- mBytes
@@ -92,8 +88,7 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 			fmt.Println(err.Error())
 			break
 		}
-		fmt.Printf("%v", blocks)
-		//handleSendAllBlocksMessage(blocks)
+		handleSendAllBlocksMessage(blocks)
 	default:
 		break
 	}
