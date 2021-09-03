@@ -1,20 +1,23 @@
 package blockchain
 
 import (
+	"encoding/json"
+	"net/http"
 	"sync"
 
 	"github.com/chiwon99881/one/db"
 	"github.com/chiwon99881/one/utils"
 )
 
-type chain struct {
+type blockchain struct {
 	Height            int    `json:"height"`
 	NewestHash        string `json:"newestHash"`
 	CurrentDifficulty int    `json:"currentDifficulty"`
+	m                 sync.Mutex
 }
 
 var once sync.Once
-var blockchain *chain
+var chain *blockchain
 
 const (
 	DefaultDifficulty   int = 2
@@ -23,54 +26,80 @@ const (
 	DecreaseDifficulty  int = 10
 )
 
-func (bc *chain) persistChain(newBlock *Block) {
-	bc.Height++
-	bc.NewestHash = newBlock.Hash
-	chainAsBytes := utils.ToBytes(bc)
+func (chain *blockchain) persistChain(newBlock *Block) {
+	chain.Height++
+	chain.NewestHash = newBlock.Hash
+	chainAsBytes := utils.ToBytes(chain)
 	db.SaveChainDB(chainAsBytes)
 }
 
 func restoreChain(data []byte) {
-	utils.FromBytes(blockchain, data)
+	utils.FromBytes(chain, data)
 }
 
-func AddBlock(bc *chain) {
-	block := CreateBlock(bc.NewestHash, bc.Height+1)
+func AddBlock(chain *blockchain) {
+	block := CreateBlock(chain.NewestHash, chain.Height+1)
 	persistBlock(block)
-	bc.persistChain(block)
+	chain.persistChain(block)
 }
 
-func GetCurrentDifficulty(blockchain *chain) int {
-	if len(Blocks(blockchain)) == 0 {
-		return blockchain.CurrentDifficulty
+func GetCurrentDifficulty(chain *blockchain) int {
+	if len(Blocks(chain)) == 0 {
+		return chain.CurrentDifficulty
 	}
-	if len(Blocks(blockchain))%5 == 0 {
-		return blockchain.reCalculateDifficulty()
+	if len(Blocks(chain))%5 == 0 {
+		return chain.reCalculateDifficulty()
 	} else {
-		return blockchain.CurrentDifficulty
+		return chain.CurrentDifficulty
 	}
 }
 
-func (blockchain *chain) reCalculateDifficulty() int {
-	allBlocks := Blocks(blockchain)
+func (chain *blockchain) reCalculateDifficulty() int {
+	allBlocks := Blocks(chain)
 	latestBlock := allBlocks[0]
 	latestRecalculateBlock := allBlocks[ReCalculateInterval-1]
 	interval := (latestBlock.Timestamp / 60) - (latestRecalculateBlock.Timestamp / 60)
 	if interval < IncreaseDifficulty {
-		blockchain.CurrentDifficulty += 1
-		return blockchain.CurrentDifficulty
+		chain.CurrentDifficulty += 1
+		return chain.CurrentDifficulty
 	} else if interval > DecreaseDifficulty {
-		blockchain.CurrentDifficulty -= 1
-		return blockchain.CurrentDifficulty
+		chain.CurrentDifficulty -= 1
+		return chain.CurrentDifficulty
 	} else {
-		return blockchain.CurrentDifficulty
+		return chain.CurrentDifficulty
 	}
 }
 
-func BlockChain() *chain {
-	if blockchain == nil {
+func HandleSendAllBlocksMessage(blocks []*Block) {
+	newestBlock := blocks[0]
+	chain.m.Lock()
+	defer chain.m.Unlock()
+
+	chain.CurrentDifficulty = newestBlock.Difficulty
+	chain.Height = newestBlock.Height
+	chain.NewestHash = newestBlock.Hash
+
+	chainAsBytes := utils.ToBytes(chain)
+
+	db.CreateAfterDeleteDB()
+	db.SaveChainDB(chainAsBytes)
+	for _, block := range blocks {
+		blockAsBytes := utils.ToBytes(block)
+		db.SaveBlockDB(block.Hash, blockAsBytes)
+	}
+}
+
+func Status(rw http.ResponseWriter) error {
+	chain.m.Lock()
+	defer chain.m.Unlock()
+	err := json.NewEncoder(rw).Encode(chain)
+	return err
+}
+
+func BlockChain() *blockchain {
+	if chain == nil {
 		once.Do(func() {
-			blockchain = &chain{
+			chain = &blockchain{
 				Height:            0,
 				NewestHash:        "",
 				CurrentDifficulty: DefaultDifficulty,
@@ -81,5 +110,5 @@ func BlockChain() *chain {
 			}
 		})
 	}
-	return blockchain
+	return chain
 }

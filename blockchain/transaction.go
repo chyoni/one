@@ -225,7 +225,7 @@ func (b *Block) coinbaseTx() {
 		TxOuts: txOuts,
 	}
 	coinbaseTxAsBytes := utils.ToBytes(coinbaseTx)
-	coinbaseTxAsBytes = append(coinbaseTxAsBytes, utils.ToBytes(blockchain.Height)...)
+	coinbaseTxAsBytes = append(coinbaseTxAsBytes, utils.ToBytes(chain.Height)...)
 	coinbaseTx.TxID = fmt.Sprintf("%x", sha256.Sum256(coinbaseTxAsBytes))
 	b.Transactions = append(b.Transactions, coinbaseTx)
 }

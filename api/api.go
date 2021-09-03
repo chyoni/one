@@ -142,7 +142,7 @@ func addBlock(rw http.ResponseWriter, r *http.Request) {
 
 func chainStatus(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(rw).Encode(blockchain.BlockChain())
+	err := blockchain.Status(rw)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})

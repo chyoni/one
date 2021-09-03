@@ -20,9 +20,9 @@ type Block struct {
 	Difficulty   int    `json:"difficulty"`
 }
 
-func Blocks(bc *chain) []*Block {
+func Blocks(chain *blockchain) []*Block {
 	var blocks []*Block
-	hashCursor := bc.NewestHash
+	hashCursor := chain.NewestHash
 	for {
 		block := &Block{}
 		blockAsBytes := db.FindBlock(hashCursor)

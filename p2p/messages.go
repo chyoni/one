@@ -88,7 +88,7 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 			fmt.Println(err.Error())
 			break
 		}
-		handleSendAllBlocksMessage(blocks)
+		blockchain.HandleSendAllBlocksMessage(blocks)
 	default:
 		break
 	}

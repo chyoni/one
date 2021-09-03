@@ -65,3 +65,5 @@
 - #30 P2P Part 6 (request all blocks message and send all blocks message)
 
 - #31 P2P Part 7 (synchronized blockchain between peer to peer)
+
+- #32 P2P Part 8 (Clearing data races)
