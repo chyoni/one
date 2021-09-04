@@ -38,7 +38,7 @@ func DB() *bolt.DB {
 		if err != nil {
 			utils.HandleErr(err)
 		}
-		dbPointer, err := bolt.Open(fmt.Sprintf("onecoin-%s.db", port), 0600, nil)
+		dbPointer, err := bolt.Open(fmt.Sprintf("onecoin.%s.db", port), 0600, nil)
 		db = dbPointer
 		utils.HandleErr(err)
 		err = db.Update(func(t *bolt.Tx) error {

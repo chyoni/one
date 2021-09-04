@@ -11,7 +11,7 @@ http://localhost:4000/blockchain
 http://localhost:4000/mempool
 
 ###
-POST http://localhost:3000/transaction/add
+POST http://localhost:4000/transaction/add
 
 {
     "to": "jungyoon",

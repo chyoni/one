@@ -138,7 +138,7 @@ func block(rw http.ResponseWriter, r *http.Request) {
 func addBlock(rw http.ResponseWriter, r *http.Request) {
 	newBlock := blockchain.AddBlock(blockchain.BlockChain())
 	for _, peer := range p2p.Peers.P {
-		peer.NewBlockMessage(newBlock)
+		peer.NewBlock(newBlock)
 	}
 	rw.WriteHeader(http.StatusCreated)
 }
@@ -194,7 +194,10 @@ func addTx(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})
 		return
 	}
-	err = blockchain.Mempool().AddTx(addTxPayload.To, addTxPayload.Amount)
+	tx, err := blockchain.Mempool().AddTx(addTxPayload.To, addTxPayload.Amount)
+	for _, peer := range p2p.Peers.P {
+		peer.NewTx(tx)
+	}
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(rw, "%s", errResponse{ErrMessage: err.Error()})

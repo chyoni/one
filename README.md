@@ -69,3 +69,5 @@
 - #32 P2P Part 8 (Clearing data races)
 
 - #33 P2P Part 9 (New block broadcast to peers)
+
+- #34 P2P Part 10 (New transaction broadcast to peers)

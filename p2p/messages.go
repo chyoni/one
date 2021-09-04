@@ -18,6 +18,7 @@ const (
 	SendNewestBlockMessage MessageKind = iota
 	RequestAllBlocksMessage
 	SendAllBlocksMessage
+	NewTransactionMessage
 	NewBlockMessage
 )
 
@@ -56,7 +57,7 @@ func (p *peer) sendAllBlocks() {
 	p.inbox <- mBytes
 }
 
-func (p *peer) NewBlockMessage(newBlock *blockchain.Block) {
+func (p *peer) NewBlock(newBlock *blockchain.Block) {
 	m := &Message{}
 
 	blockAsJSON, err := utils.EncodeAsJSON(newBlock)
@@ -66,6 +67,19 @@ func (p *peer) NewBlockMessage(newBlock *blockchain.Block) {
 	m.Payload = blockAsJSON
 
 	mBytes := utils.ToBytes(m)
+	p.inbox <- mBytes
+}
+
+func (p *peer) NewTx(newTx *blockchain.Tx) {
+	m := &Message{}
+
+	newTxAsBytes, err := utils.EncodeAsJSON(newTx)
+	utils.HandleErr(err)
+
+	m.MessageKind = NewTransactionMessage
+	m.Payload = newTxAsBytes
+	mBytes := utils.ToBytes(m)
+
 	p.inbox <- mBytes
 }
 
@@ -109,6 +123,14 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 		utils.HandleErr(err)
 
 		blockchain.HandleNewBlockMessage(block)
+		fmt.Printf("I Received new block from %s\n", p.Key)
+	case NewTransactionMessage:
+		tx := &blockchain.Tx{}
+		err := utils.DecodeAsJSON(tx, payload)
+		utils.HandleErr(err)
+
+		blockchain.HandleNewTxMessage(tx)
+		fmt.Printf("I Received new Transactions from %s\n", p.Key)
 	default:
 		break
 	}

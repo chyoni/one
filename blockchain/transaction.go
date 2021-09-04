@@ -38,6 +38,7 @@ type UTxOut struct {
 
 type mempool struct {
 	Txs []*Tx
+	m   sync.Mutex
 }
 
 var m *mempool
@@ -74,7 +75,7 @@ func GetUTxOutsByAddress(address string) []*UTxOut {
 	var ownedUTxOuts []*UTxOut
 	sTxOut := make(map[string]bool)
 	txs := Txs()
-	txs = append(txs, m.Txs...)
+	txs = append(txs, Mempool().Txs...)
 	for _, tx := range txs {
 		for _, txIn := range tx.TxIns {
 			if txIn.Signature == "COINBASE" {
@@ -168,10 +169,10 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	return tx, nil
 }
 
-func (m *mempool) AddTx(to string, amount int) error {
+func (m *mempool) AddTx(to string, amount int) (*Tx, error) {
 	tx, err := makeTx(wallet.Wallet().Address, to, amount)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var newestTxs []*Tx
 	newestTxs = append(newestTxs, tx)
@@ -179,7 +180,7 @@ func (m *mempool) AddTx(to string, amount int) error {
 	m.Txs = newestTxs
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
-	return nil
+	return tx, nil
 }
 
 func (m *mempool) TxToConfirm() []*Tx {
@@ -194,7 +195,7 @@ func (m *mempool) TxToConfirm() []*Tx {
 func isOnMempool(txID, address string) bool {
 	isOn := false
 Outer:
-	for _, tx := range m.Txs {
+	for _, tx := range Mempool().Txs {
 		for _, txIn := range tx.TxIns {
 			if txIn.TxID == txID && FindTx(txIn.TxID).TxOuts[txIn.Index].Address == address {
 				isOn = true
