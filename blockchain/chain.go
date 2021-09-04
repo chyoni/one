@@ -37,10 +37,11 @@ func restoreChain(data []byte) {
 	utils.FromBytes(chain, data)
 }
 
-func AddBlock(chain *blockchain) {
+func AddBlock(chain *blockchain) *Block {
 	block := CreateBlock(chain.NewestHash, chain.Height+1)
 	persistBlock(block)
 	chain.persistChain(block)
+	return block
 }
 
 func GetCurrentDifficulty(chain *blockchain) int {
@@ -87,6 +88,14 @@ func HandleSendAllBlocksMessage(blocks []*Block) {
 		blockAsBytes := utils.ToBytes(block)
 		db.SaveBlockDB(block.Hash, blockAsBytes)
 	}
+}
+
+func HandleNewBlockMessage(block *Block) {
+	chain.m.Lock()
+	defer chain.m.Unlock()
+
+	persistBlock(block)
+	chain.persistChain(block)
 }
 
 func Status(rw http.ResponseWriter) error {

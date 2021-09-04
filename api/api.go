@@ -136,7 +136,10 @@ func block(rw http.ResponseWriter, r *http.Request) {
 }
 
 func addBlock(rw http.ResponseWriter, r *http.Request) {
-	blockchain.AddBlock(blockchain.BlockChain())
+	newBlock := blockchain.AddBlock(blockchain.BlockChain())
+	for _, peer := range p2p.Peers.P {
+		peer.NewBlockMessage(newBlock)
+	}
 	rw.WriteHeader(http.StatusCreated)
 }
 

@@ -67,3 +67,5 @@
 - #31 P2P Part 7 (synchronized blockchain between peer to peer)
 
 - #32 P2P Part 8 (Clearing data races)
+
+- #33 P2P Part 9 (New block broadcast to peers)

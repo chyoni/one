@@ -56,7 +56,6 @@ func (b *Block) mine() {
 	for {
 		hashAsBytes := utils.ToBytes(b)
 		hash := fmt.Sprintf("%x", sha256.Sum256(hashAsBytes))
-		fmt.Printf("Hash:%s\nNounce:%d\nCurrentDifficulty:%s\n", hash, b.Nounce, currentPreFix)
 		done := strings.HasPrefix(hash, currentPreFix)
 		if done {
 			b.Hash = hash

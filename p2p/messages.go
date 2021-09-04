@@ -18,6 +18,7 @@ const (
 	SendNewestBlockMessage MessageKind = iota
 	RequestAllBlocksMessage
 	SendAllBlocksMessage
+	NewBlockMessage
 )
 
 func (p *peer) sendNewestBlock() {
@@ -51,6 +52,19 @@ func (p *peer) sendAllBlocks() {
 	blocksAsJSON, err := utils.EncodeAsJSON(blocks)
 	utils.HandleErr(err)
 	m.Payload = blocksAsJSON
+	mBytes := utils.ToBytes(m)
+	p.inbox <- mBytes
+}
+
+func (p *peer) NewBlockMessage(newBlock *blockchain.Block) {
+	m := &Message{}
+
+	blockAsJSON, err := utils.EncodeAsJSON(newBlock)
+	utils.HandleErr(err)
+
+	m.MessageKind = NewBlockMessage
+	m.Payload = blockAsJSON
+
 	mBytes := utils.ToBytes(m)
 	p.inbox <- mBytes
 }
@@ -89,6 +103,12 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 			break
 		}
 		blockchain.HandleSendAllBlocksMessage(blocks)
+	case NewBlockMessage:
+		block := &blockchain.Block{}
+		err := utils.DecodeAsJSON(block, payload)
+		utils.HandleErr(err)
+
+		blockchain.HandleNewBlockMessage(block)
 	default:
 		break
 	}
