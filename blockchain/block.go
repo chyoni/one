@@ -21,6 +21,9 @@ type Block struct {
 }
 
 func Blocks(chain *blockchain) []*Block {
+	chain.m.Lock()
+	defer chain.m.Unlock()
+
 	var blocks []*Block
 	hashCursor := chain.NewestHash
 	for {
@@ -75,7 +78,12 @@ func CreateBlock(prevHash string, height int) *Block {
 		Nounce:     0,
 		Difficulty: GetCurrentDifficulty(BlockChain()),
 	}
-	b.Transactions = Mempool().TxToConfirm()
+	txsOnBlock := Mempool().TxToConfirm()
+	var txs []*Tx
+	for _, tx := range txsOnBlock {
+		txs = append(txs, tx)
+	}
+	b.Transactions = txs
 	b.coinbaseTx()
 	b.mine()
 	return b

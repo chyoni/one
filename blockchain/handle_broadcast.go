@@ -30,16 +30,26 @@ func HandleNewBlockMessage(block *Block) {
 
 	persistBlock(block)
 	chain.persistChain(block)
+
+	for _, tx := range block.Transactions {
+		for key := range Mempool().Txs {
+			if tx.TxID == key {
+				delete(Mempool().Txs, key)
+			}
+		}
+	}
 }
 
 func HandleNewTxMessage(tx *Tx) {
 	Mempool().m.Lock()
 	defer Mempool().m.Unlock()
 
-	var newestTxs []*Tx
-	newestTxs = append(newestTxs, tx)
-	newestTxs = append(newestTxs, Mempool().Txs...)
-	m.Txs = newestTxs
+	tempTxs := make(map[string]*Tx)
+	tempTxs[tx.TxID] = tx
+	for key, value := range Mempool().Txs {
+		tempTxs[key] = value
+	}
+	m.Txs = tempTxs
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
 }

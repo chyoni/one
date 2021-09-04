@@ -37,7 +37,7 @@ type UTxOut struct {
 }
 
 type mempool struct {
-	Txs []*Tx
+	Txs map[string]*Tx
 	m   sync.Mutex
 }
 
@@ -75,7 +75,9 @@ func GetUTxOutsByAddress(address string) []*UTxOut {
 	var ownedUTxOuts []*UTxOut
 	sTxOut := make(map[string]bool)
 	txs := Txs()
-	txs = append(txs, Mempool().Txs...)
+	for _, value := range Mempool().Txs {
+		txs = append(txs, value)
+	}
 	for _, tx := range txs {
 		for _, txIn := range tx.TxIns {
 			if txIn.Signature == "COINBASE" {
@@ -174,19 +176,23 @@ func (m *mempool) AddTx(to string, amount int) (*Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	var newestTxs []*Tx
-	newestTxs = append(newestTxs, tx)
-	newestTxs = append(newestTxs, m.Txs...)
-	m.Txs = newestTxs
+	tempTxs := make(map[string]*Tx)
+	tempTxs[tx.TxID] = tx
+	for key, value := range m.Txs {
+		tempTxs[key] = value
+	}
+	m.Txs = tempTxs
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
 	return tx, nil
 }
 
-func (m *mempool) TxToConfirm() []*Tx {
-	var txs []*Tx
-	txs = append(txs, m.Txs...)
-	m.Txs = nil
+func (m *mempool) TxToConfirm() map[string]*Tx {
+	txs := make(map[string]*Tx)
+	for key, value := range m.Txs {
+		txs[key] = value
+	}
+	m.Txs = make(map[string]*Tx)
 	mBytes := utils.ToBytes(m)
 	db.PushOnMempool(mBytes)
 	return txs
@@ -234,7 +240,9 @@ func (b *Block) coinbaseTx() {
 func Mempool() *mempool {
 	if m == nil {
 		memOnce.Do(func() {
-			m = &mempool{}
+			m = &mempool{
+				Txs: make(map[string]*Tx),
+			}
 			memData := db.GetExistMempool()
 			if memData != nil {
 				utils.FromBytes(m, memData)
