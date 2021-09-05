@@ -21,11 +21,11 @@ type Block struct {
 }
 
 func Blocks(chain *blockchain) []*Block {
-	chain.m.Lock()
-	defer chain.m.Unlock()
+	BlockChain().m.Lock()
+	defer BlockChain().m.Unlock()
 
 	var blocks []*Block
-	hashCursor := chain.NewestHash
+	hashCursor := GetNewestHash()
 	for {
 		block := &Block{}
 		blockAsBytes := db.FindBlock(hashCursor)

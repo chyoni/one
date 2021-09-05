@@ -10,6 +10,12 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+type DataBase struct{}
+
+func (DataBase) GetExistChain() []byte {
+	return getExistChain()
+}
+
 const (
 	chainBucket   string = "chainBucket"
 	blockBucket   string = "blockBucket"
@@ -78,7 +84,7 @@ func SaveBlockDB(key string, data []byte) {
 	})
 }
 
-func GetExistChain() []byte {
+func getExistChain() []byte {
 	var newestHash []byte
 	DB().View(func(t *bolt.Tx) error {
 		b := t.Bucket([]byte(chainBucket))

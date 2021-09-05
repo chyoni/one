@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/chiwon99881/one/db"
+	"github.com/chiwon99881/one/interfaces"
 	"github.com/chiwon99881/one/utils"
 )
 
@@ -15,6 +16,8 @@ type blockchain struct {
 	CurrentDifficulty int    `json:"currentDifficulty"`
 	m                 sync.Mutex
 }
+
+var dbOperator interfaces.DBOperation = db.DataBase{}
 
 var once sync.Once
 var chain *blockchain
@@ -79,10 +82,7 @@ func Status(rw http.ResponseWriter) error {
 }
 
 func GetNewestHash() string {
-	BlockChain().m.Lock()
-	defer BlockChain().m.Unlock()
-
-	return BlockChain().NewestHash
+	return chain.NewestHash
 }
 
 func BlockChain() *blockchain {
@@ -93,7 +93,7 @@ func BlockChain() *blockchain {
 				NewestHash:        "",
 				CurrentDifficulty: DefaultDifficulty,
 			}
-			existChain := db.GetExistChain()
+			existChain := dbOperator.GetExistChain()
 			if existChain != nil {
 				restoreChain(existChain)
 			}

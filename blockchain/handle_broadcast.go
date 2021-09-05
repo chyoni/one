@@ -27,8 +27,8 @@ func HandleSendNewestBlockMessage(block *Block) int {
 
 func HandleSendAllBlocksMessage(blocks []*Block) {
 	newestBlock := blocks[0]
-	chain.m.Lock()
-	defer chain.m.Unlock()
+	BlockChain().m.Lock()
+	defer BlockChain().m.Unlock()
 
 	chain.CurrentDifficulty = newestBlock.Difficulty
 	chain.Height = newestBlock.Height

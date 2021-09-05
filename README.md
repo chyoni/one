@@ -77,3 +77,15 @@
 - #36 P2P Part 12 (broadcast new peer)
 
 - #37 P2P Part DONE! (clearing data races)
+
+- #38 Unit Test Part 1 (blockchain package)
+
+  #### TDD with interface
+
+  - 테스트를 할 때 실제 Database에서 가져오는 데이터를 사용하고 싶지 않고 그저 코드의 로직을 테스트하고 싶기 때문에 실제로 돌릴 때 사용될 function과 테스트할 때 사용될 function을
+    구분해야 한다. 이를 위해 interface로 해당 func을 구현하고 해당 interface를 implement하는 두 struct를 사용하여 하나는 실제 환경 나머지 하나는 테스트 환경을 위해 사용하게끔 코드를 작성한다.
+
+  #### Go Test Command
+
+  - go test -v ./.../ -> 현재 위치에서 모든 폴더의 \_test.go 형식의 test파일을 실행
+  - go test -v ./blockchain -> 현재 위치에서 blockchain폴더의 \_test.go 형식의 test파일을 실행
