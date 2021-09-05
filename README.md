@@ -75,3 +75,5 @@
 - #35 P2P Part 11 (synchronized mempool between nodes)
 
 - #36 P2P Part 12 (broadcast new peer)
+
+- #37 P2P Part DONE! (clearing data races)
