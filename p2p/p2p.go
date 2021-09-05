@@ -29,7 +29,18 @@ func Upgrade(rw http.ResponseWriter, r *http.Request) {
 	initPeer(conn, addrSlice[0], remotePort)
 }
 
-func ConnectPeer(addr, port string, remotePort int) {
+func broadcastNewPeer(newPeer *peer) {
+	Peers.m.Lock()
+	defer Peers.m.Unlock()
+
+	for key, existPeer := range Peers.P {
+		if newPeer.Key != key {
+			existPeer.newPeer(newPeer)
+		}
+	}
+}
+
+func ConnectPeer(addr, port string, remotePort int, broadcasting bool) {
 	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?remotePort=%d", addr, port, remotePort), nil)
 	if err != nil {
 		utils.HandleErr(err)
@@ -38,4 +49,8 @@ func ConnectPeer(addr, port string, remotePort int) {
 	peer := initPeer(conn, addr, port)
 	fmt.Printf("Sending my all blocks to %s:%s when first connection\n\n", addr, port)
 	peer.sendNewestBlock()
+
+	if broadcasting {
+		broadcastNewPeer(peer)
+	}
 }

@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/chiwon99881/one/blockchain"
 	"github.com/chiwon99881/one/utils"
@@ -14,19 +15,26 @@ type Message struct {
 	Payload     []byte      `json:"payload"`
 }
 
+type newPeerPayload struct {
+	Addr       string `json:"addr"`
+	Port       string `json:"port"`
+	RemotePort string `json:"remotePort"`
+}
+
 const (
 	SendNewestBlockMessage MessageKind = iota
 	RequestAllBlocksMessage
-	SendAllBlocksMessage
 	NewTransactionMessage
+	SendAllBlocksMessage
 	NewBlockMessage
+	NewPeerMessage
 )
 
 func (p *peer) sendNewestBlock() {
 	m := &Message{}
 
-	chain := blockchain.BlockChain()
-	block := blockchain.FindBlock(chain.NewestHash)
+	newestHash := blockchain.GetNewestHash()
+	block := blockchain.FindBlock(newestHash)
 	blockAsJSON, err := utils.EncodeAsJSON(block)
 	utils.HandleErr(err)
 	m.MessageKind = SendNewestBlockMessage
@@ -83,6 +91,23 @@ func (p *peer) NewTx(newTx *blockchain.Tx) {
 	p.inbox <- mBytes
 }
 
+func (p *peer) newPeer(newPeer *peer) {
+	m := &Message{}
+
+	newPeerPayload := &newPeerPayload{
+		Addr:       newPeer.Addr,
+		Port:       newPeer.Port,
+		RemotePort: p.Port,
+	}
+	payload, err := utils.EncodeAsJSON(newPeerPayload)
+	utils.HandleErr(err)
+
+	m.MessageKind = NewPeerMessage
+	m.Payload = payload
+	mBytes := utils.ToBytes(m)
+	p.inbox <- mBytes
+}
+
 func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 	switch kind {
 	case SendNewestBlockMessage:
@@ -92,18 +117,16 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 			fmt.Println(err.Error())
 			break
 		}
-		myChain := blockchain.BlockChain()
-		if block.Height > myChain.Height {
+		result := blockchain.HandleSendNewestBlockMessage(block)
+		switch result {
+		case blockchain.ChangeMyBlockChain:
 			fmt.Printf("I want to get all blocks of %s\n", p.Key)
 			p.requestAllBlocks()
-			break
-		} else if block.Height < myChain.Height {
+		case blockchain.SendMyBlockChain:
 			fmt.Printf("Send my all blocks to %s\n", p.Key)
 			p.sendNewestBlock()
-			break
-		} else {
+		case blockchain.NothingToDoAnything:
 			fmt.Printf("we are same blockchain 🤘\n")
-			break
 		}
 	case RequestAllBlocksMessage:
 		fmt.Printf("I've sending all blocks to %s\n", p.Key)
@@ -131,6 +154,14 @@ func BroadcastMessage(kind MessageKind, payload []byte, p *peer) {
 
 		blockchain.HandleNewTxMessage(tx)
 		fmt.Printf("I Received new Transactions from %s\n", p.Key)
+	case NewPeerMessage:
+		newPeerPayload := &newPeerPayload{}
+		err := utils.DecodeAsJSON(newPeerPayload, payload)
+		utils.HandleErr(err)
+
+		remotePort, err := strconv.Atoi(newPeerPayload.RemotePort)
+		utils.HandleErr(err)
+		ConnectPeer(newPeerPayload.Addr, newPeerPayload.Port, remotePort, false)
 	default:
 		break
 	}

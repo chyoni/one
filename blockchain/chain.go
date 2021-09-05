@@ -78,6 +78,13 @@ func Status(rw http.ResponseWriter) error {
 	return err
 }
 
+func GetNewestHash() string {
+	BlockChain().m.Lock()
+	defer BlockChain().m.Unlock()
+
+	return BlockChain().NewestHash
+}
+
 func BlockChain() *blockchain {
 	if chain == nil {
 		once.Do(func() {

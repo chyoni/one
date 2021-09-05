@@ -73,3 +73,5 @@
 - #34 P2P Part 10 (New transaction broadcast to peers)
 
 - #35 P2P Part 11 (synchronized mempool between nodes)
+
+- #36 P2P Part 12 (broadcast new peer)

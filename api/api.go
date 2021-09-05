@@ -216,7 +216,7 @@ func addPeer(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
-	p2p.ConnectPeer(addPeerPayload.Addr, addPeerPayload.Port, port)
+	p2p.ConnectPeer(addPeerPayload.Addr, addPeerPayload.Port, port, true)
 }
 
 func myPeer(rw http.ResponseWriter, r *http.Request) {
