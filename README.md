@@ -89,3 +89,5 @@
 
   - go test -v ./.../ -> 현재 위치에서 모든 폴더의 \_test.go 형식의 test파일을 실행
   - go test -v ./blockchain -> 현재 위치에서 blockchain폴더의 \_test.go 형식의 test파일을 실행
+
+- #39 Unit Test Part 2 (blockchain package)
