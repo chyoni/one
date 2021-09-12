@@ -24,6 +24,10 @@ func (DataBase) FindBlock(hash string) []byte {
 	return findBlock(hash)
 }
 
+func (DataBase) SaveBlockDB(key string, data []byte) {
+	saveBlockDB(key, data)
+}
+
 const (
 	chainBucket   string = "chainBucket"
 	blockBucket   string = "blockBucket"
@@ -83,7 +87,7 @@ func saveChainDB(data []byte) {
 	})
 }
 
-func SaveBlockDB(key string, data []byte) {
+func saveBlockDB(key string, data []byte) {
 	DB().Update(func(t *bolt.Tx) error {
 		b := t.Bucket([]byte(blockBucket))
 		err := b.Put([]byte(key), data)

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chiwon99881/one/db"
 	"github.com/chiwon99881/one/utils"
 )
 
@@ -51,7 +50,7 @@ func FindBlock(hash string) *Block {
 
 func persistBlock(newBlock *Block) {
 	blockAsBytes := utils.ToBytes(newBlock)
-	db.SaveBlockDB(newBlock.Hash, blockAsBytes)
+	dbOperator.SaveBlockDB(newBlock.Hash, blockAsBytes)
 }
 
 func (b *Block) mine() {

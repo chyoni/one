@@ -40,7 +40,7 @@ func HandleSendAllBlocksMessage(blocks []*Block) {
 	dbOperator.SaveChainDB(chainAsBytes)
 	for _, block := range blocks {
 		blockAsBytes := utils.ToBytes(block)
-		db.SaveBlockDB(block.Hash, blockAsBytes)
+		dbOperator.SaveBlockDB(block.Hash, blockAsBytes)
 	}
 }
 

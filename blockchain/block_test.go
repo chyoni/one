@@ -76,3 +76,20 @@ func TestFindBlock(t *testing.T) {
 		t.Fatalf("block height should be 1 but got %d", block.Height)
 	}
 }
+
+func TestPersistBlock(t *testing.T) {
+	newBlock := &Block{
+		Hash: "newHash",
+	}
+	saveBlockResult := &Block{}
+	dbOperator = &testDataBase{
+		testSaveBlockDB: func(key string, data []byte) string {
+			utils.FromBytes(saveBlockResult, data)
+			return saveBlockResult.Hash
+		},
+	}
+	persistBlock(newBlock)
+	if saveBlockResult.Hash != "newHash" {
+		t.Fatalf("persist block's hash should be 'newHash' but got %s", saveBlockResult.Hash)
+	}
+}

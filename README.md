@@ -101,3 +101,5 @@
   - test for infinite loop
 
 - #42 Unit Test Part 5 (blockchain package)
+
+- #43 Unit Test Part 6 (blockchain package)

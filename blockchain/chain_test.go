@@ -11,6 +11,7 @@ import (
 type testDataBase struct {
 	testGetExistChain func() []byte
 	testFindBlock     func(hash string) []byte
+	testSaveBlockDB   func(key string, data []byte) (blockHash string)
 }
 
 func (t *testDataBase) GetExistChain() []byte {
@@ -23,6 +24,10 @@ func (testDataBase) SaveChainDB(data []byte) {
 
 func (t *testDataBase) FindBlock(hash string) []byte {
 	return t.testFindBlock(hash)
+}
+
+func (t *testDataBase) SaveBlockDB(key string, data []byte) {
+	t.testSaveBlockDB(key, data)
 }
 
 func TestBlockChain(t *testing.T) {
