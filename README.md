@@ -95,3 +95,7 @@
 - #40 Unit Test Part 3 (blockchain package)
 
   - go test -v -coverprofile cover.out ./... && go tool cover -html=cover.out
+
+- #41 Unit Test Part 4 (blockchain package)
+
+  - test for infinite loop

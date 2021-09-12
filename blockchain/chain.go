@@ -81,7 +81,7 @@ func Status(rw http.ResponseWriter) error {
 	return err
 }
 
-func GetNewestHash() string {
+func GetNewestHash(chain *blockchain) string {
 	return chain.NewestHash
 }
 

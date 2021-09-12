@@ -33,7 +33,7 @@ const (
 func (p *peer) sendNewestBlock() {
 	m := &Message{}
 
-	newestHash := blockchain.GetNewestHash()
+	newestHash := blockchain.GetNewestHash(blockchain.BlockChain())
 	block := blockchain.FindBlock(newestHash)
 	blockAsJSON, err := utils.EncodeAsJSON(block)
 	utils.HandleErr(err)

@@ -21,14 +21,14 @@ type Block struct {
 }
 
 func Blocks(chain *blockchain) []*Block {
-	BlockChain().m.Lock()
-	defer BlockChain().m.Unlock()
+	chain.m.Lock()
+	defer chain.m.Unlock()
 
 	var blocks []*Block
-	hashCursor := GetNewestHash()
+	hashCursor := GetNewestHash(chain)
 	for {
 		block := &Block{}
-		blockAsBytes := db.FindBlock(hashCursor)
+		blockAsBytes := dbOperator.FindBlock(hashCursor)
 		if blockAsBytes == nil {
 			break
 		}
@@ -44,7 +44,7 @@ func Blocks(chain *blockchain) []*Block {
 
 func FindBlock(hash string) *Block {
 	block := &Block{}
-	blockAsBytes := db.FindBlock(hash)
+	blockAsBytes := dbOperator.FindBlock(hash)
 	utils.FromBytes(block, blockAsBytes)
 	return block
 }

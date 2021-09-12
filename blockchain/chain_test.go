@@ -10,6 +10,7 @@ import (
 
 type testDataBase struct {
 	testGetExistChain func() []byte
+	testFindBlock     func() []byte
 }
 
 func (t *testDataBase) GetExistChain() []byte {
@@ -20,6 +21,10 @@ func (testDataBase) SaveChainDB(data []byte) {
 	fmt.Println("executing saveChainDB func for test")
 }
 
+func (t *testDataBase) FindBlock(hash string) []byte {
+	return t.testFindBlock()
+}
+
 func TestBlockChain(t *testing.T) {
 	t.Run("get exist chain is nil", func(t *testing.T) {
 		dbOperator = &testDataBase{
@@ -28,8 +33,14 @@ func TestBlockChain(t *testing.T) {
 			},
 		}
 		chain := BlockChain()
-		if chain.Height != 0 || chain.NewestHash != "" || chain.CurrentDifficulty != DefaultDifficulty {
+		if chain.Height != 0 {
 			t.Fatalf("chain's height should be 0, but got %d", chain.Height)
+		}
+		if chain.NewestHash != "" {
+			t.Fatalf("chain's NewestHash should be '' but got %s", chain.NewestHash)
+		}
+		if chain.CurrentDifficulty != DefaultDifficulty {
+			t.Fatalf("chain's CurrentDifficulty is 2 but got %d", chain.CurrentDifficulty)
 		}
 	})
 

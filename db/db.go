@@ -20,6 +20,10 @@ func (DataBase) SaveChainDB(data []byte) {
 	saveChainDB(data)
 }
 
+func (DataBase) FindBlock(hash string) []byte {
+	return findBlock(hash)
+}
+
 const (
 	chainBucket   string = "chainBucket"
 	blockBucket   string = "blockBucket"
@@ -120,7 +124,7 @@ func PushOnMempool(data []byte) {
 	})
 }
 
-func FindBlock(hash string) []byte {
+func findBlock(hash string) []byte {
 	var blockAsBytes []byte
 	DB().View(func(t *bolt.Tx) error {
 		b := t.Bucket([]byte(blockBucket))
