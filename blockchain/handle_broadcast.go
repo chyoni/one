@@ -37,7 +37,7 @@ func HandleSendAllBlocksMessage(blocks []*Block) {
 	chainAsBytes := utils.ToBytes(chain)
 
 	db.CreateAfterDeleteDB()
-	db.SaveChainDB(chainAsBytes)
+	dbOperator.SaveChainDB(chainAsBytes)
 	for _, block := range blocks {
 		blockAsBytes := utils.ToBytes(block)
 		db.SaveBlockDB(block.Hash, blockAsBytes)

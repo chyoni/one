@@ -91,3 +91,7 @@
   - go test -v ./blockchain -> 현재 위치에서 blockchain폴더의 \_test.go 형식의 test파일을 실행
 
 - #39 Unit Test Part 2 (blockchain package)
+
+- #40 Unit Test Part 3 (blockchain package)
+
+  - go test -v -coverprofile cover.out ./... && go tool cover -html=cover.out

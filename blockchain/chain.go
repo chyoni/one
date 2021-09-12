@@ -33,7 +33,7 @@ func (chain *blockchain) persistChain(newBlock *Block) {
 	chain.Height++
 	chain.NewestHash = newBlock.Hash
 	chainAsBytes := utils.ToBytes(chain)
-	db.SaveChainDB(chainAsBytes)
+	dbOperator.SaveChainDB(chainAsBytes)
 }
 
 func restoreChain(data []byte) {

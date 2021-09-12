@@ -16,6 +16,10 @@ func (DataBase) GetExistChain() []byte {
 	return getExistChain()
 }
 
+func (DataBase) SaveChainDB(data []byte) {
+	saveChainDB(data)
+}
+
 const (
 	chainBucket   string = "chainBucket"
 	blockBucket   string = "blockBucket"
@@ -66,7 +70,7 @@ func Close() {
 	DB().Close()
 }
 
-func SaveChainDB(data []byte) {
+func saveChainDB(data []byte) {
 	DB().Update(func(t *bolt.Tx) error {
 		b := t.Bucket([]byte(chainBucket))
 		err := b.Put([]byte(cursor), data)
