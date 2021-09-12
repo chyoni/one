@@ -10,7 +10,7 @@ import (
 
 type testDataBase struct {
 	testGetExistChain func() []byte
-	testFindBlock     func() []byte
+	testFindBlock     func(hash string) []byte
 }
 
 func (t *testDataBase) GetExistChain() []byte {
@@ -22,7 +22,7 @@ func (testDataBase) SaveChainDB(data []byte) {
 }
 
 func (t *testDataBase) FindBlock(hash string) []byte {
-	return t.testFindBlock()
+	return t.testFindBlock(hash)
 }
 
 func TestBlockChain(t *testing.T) {

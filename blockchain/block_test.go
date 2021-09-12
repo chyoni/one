@@ -13,7 +13,7 @@ func TestBlocks(t *testing.T) {
 		}
 
 		dbOperator = &testDataBase{
-			testFindBlock: func() []byte {
+			testFindBlock: func(hash string) []byte {
 				return nil
 			},
 		}
@@ -29,7 +29,7 @@ func TestBlocks(t *testing.T) {
 			NewestHash: "",
 		}
 		dbOperator = &testDataBase{
-			testFindBlock: func() []byte {
+			testFindBlock: func(hash string) []byte {
 				defer func() {
 					index++
 				}()
@@ -55,4 +55,24 @@ func TestBlocks(t *testing.T) {
 		}
 		chain = nil
 	})
+}
+
+func TestFindBlock(t *testing.T) {
+	dbOperator = &testDataBase{
+		testFindBlock: func(hash string) []byte {
+			block := &Block{
+				Hash:   hash,
+				Height: 1,
+			}
+			blockBytes := utils.ToBytes(block)
+			return blockBytes
+		},
+	}
+	block := FindBlock("hash")
+	if block.Hash != "hash" {
+		t.Fatalf("block hash should be 'hash' but got %s", block.Hash)
+	}
+	if block.Height != 1 {
+		t.Fatalf("block height should be 1 but got %d", block.Height)
+	}
 }
