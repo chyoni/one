@@ -59,7 +59,7 @@ func HandleNewBlockMessage(block *Block) {
 		}
 	}
 	mBytes := utils.ToBytes(Mempool())
-	db.PushOnMempool(mBytes)
+	dbOperator.PushOnMempool(mBytes)
 }
 
 func HandleNewTxMessage(tx *Tx) {
@@ -73,5 +73,5 @@ func HandleNewTxMessage(tx *Tx) {
 	}
 	Mempool().Txs = tempTxs
 	mBytes := utils.ToBytes(Mempool())
-	db.PushOnMempool(mBytes)
+	dbOperator.PushOnMempool(mBytes)
 }

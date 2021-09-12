@@ -183,7 +183,7 @@ func (m *mempool) AddTx(to string, amount int) (*Tx, error) {
 	}
 	m.Txs = tempTxs
 	mBytes := utils.ToBytes(m)
-	db.PushOnMempool(mBytes)
+	dbOperator.PushOnMempool(mBytes)
 	return tx, nil
 }
 
@@ -194,7 +194,7 @@ func (m *mempool) TxToConfirm() map[string]*Tx {
 	}
 	m.Txs = make(map[string]*Tx)
 	mBytes := utils.ToBytes(m)
-	db.PushOnMempool(mBytes)
+	dbOperator.PushOnMempool(mBytes)
 	return txs
 }
 

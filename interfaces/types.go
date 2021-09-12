@@ -5,4 +5,5 @@ type DBOperation interface {
 	SaveChainDB(data []byte)
 	FindBlock(hash string) []byte
 	SaveBlockDB(key string, data []byte)
+	PushOnMempool(data []byte)
 }

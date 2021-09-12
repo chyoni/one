@@ -30,6 +30,10 @@ func (t *testDataBase) SaveBlockDB(key string, data []byte) {
 	t.testSaveBlockDB(key, data)
 }
 
+func (testDataBase) PushOnMempool(data []byte) {
+	fmt.Println("executing pushOnMempool func for test")
+}
+
 func TestBlockChain(t *testing.T) {
 	t.Run("get exist chain is nil", func(t *testing.T) {
 		dbOperator = &testDataBase{

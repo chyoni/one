@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/chiwon99881/one/utils"
@@ -92,4 +93,54 @@ func TestPersistBlock(t *testing.T) {
 	if saveBlockResult.Hash != "newHash" {
 		t.Fatalf("persist block's hash should be 'newHash' but got %s", saveBlockResult.Hash)
 	}
+}
+
+func TestMine(t *testing.T) {
+	block := &Block{
+		Difficulty: 2,
+		Nounce:     0,
+		Hash:       "",
+	}
+	block.mine()
+
+	if block.Hash == "" {
+		t.Fatalf("block hash should be change from initialized hash")
+	}
+	if block.Nounce == 0 {
+		t.Fatalf("block's Nounce should be change from initialized nounce")
+	}
+}
+
+func TestCreateBlock(t *testing.T) {
+	chain = nil
+	once = *new(sync.Once)
+	dbOperator = &testDataBase{
+		testGetExistChain: func() []byte {
+			testChain := &blockchain{
+				NewestHash:        "",
+				CurrentDifficulty: 2,
+			}
+			chainBytes := utils.ToBytes(testChain)
+			return chainBytes
+		},
+		testFindBlock: func(hash string) []byte {
+			return nil
+		},
+	}
+	m = &mempool{
+		Txs: make(map[string]*Tx),
+	}
+	tx := &Tx{}
+	m.Txs["hash"] = tx
+	block := CreateBlock("prevHash", 6)
+	if block.Height != 6 {
+		t.Fatalf("block's height should be 6 but got %d", block.Height)
+	}
+	if block.Difficulty != 2 {
+		t.Fatalf("block's difficulty should be 2 but got %d", block.Difficulty)
+	}
+	if len(block.Transactions) != 2 {
+		t.Fatalf("block's txs length should be 2 but got %d", len(block.Transactions))
+	}
+	m = nil
 }

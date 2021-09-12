@@ -28,6 +28,10 @@ func (DataBase) SaveBlockDB(key string, data []byte) {
 	saveBlockDB(key, data)
 }
 
+func (DataBase) PushOnMempool(data []byte) {
+	pushOnMempool(data)
+}
+
 const (
 	chainBucket   string = "chainBucket"
 	blockBucket   string = "blockBucket"
@@ -116,7 +120,7 @@ func GetExistMempool() []byte {
 	return memData
 }
 
-func PushOnMempool(data []byte) {
+func pushOnMempool(data []byte) {
 	DB().Update(func(t *bolt.Tx) error {
 		err := t.DeleteBucket([]byte(mempoolBucket))
 		utils.HandleErr(err)
