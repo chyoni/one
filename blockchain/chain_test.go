@@ -11,7 +11,7 @@ import (
 type testDataBase struct {
 	testGetExistChain func() []byte
 	testFindBlock     func(hash string) []byte
-	testSaveBlockDB   func(key string, data []byte) (blockHash string)
+	testSaveBlockDB   func(key string, data []byte) string
 }
 
 func (t *testDataBase) GetExistChain() []byte {
@@ -92,4 +92,39 @@ func TestPersistChain(t *testing.T) {
 	if testChain.NewestHash != "" {
 		t.Fatalf("chain's NewestHash should be '' but got %s", testChain.NewestHash)
 	}
+}
+
+func TestAddBlock(t *testing.T) {
+	saveBlockResult := &Block{}
+	dbOperator = &testDataBase{
+		testFindBlock: func(hash string) []byte {
+			return nil
+		},
+		testSaveBlockDB: func(key string, data []byte) string {
+			utils.FromBytes(saveBlockResult, data)
+			return saveBlockResult.Hash
+		},
+	}
+	m = &mempool{
+		Txs: make(map[string]*Tx),
+	}
+	tx := &Tx{}
+	m.Txs["hash"] = tx
+
+	chain := &blockchain{
+		NewestHash: "hash",
+		Height:     1,
+	}
+	block := AddBlock(chain)
+
+	if block.Hash != saveBlockResult.Hash {
+		t.Fatalf("block hash is should be same saveBlockResult.Hash")
+	}
+	if chain.Height != 2 {
+		t.Fatalf("chain's height should be 2 but got %d", chain.Height)
+	}
+	if chain.NewestHash != block.Hash {
+		t.Fatalf("chain's newestHash should be same block.Hash")
+	}
+	m = nil
 }

@@ -105,3 +105,5 @@
 - #43 Unit Test Part 6 (blockchain package)
 
 - #44 Unit Test Part 7 (blockchain package)
+
+- #45 Unit Test Part 8 (blockchain package)
