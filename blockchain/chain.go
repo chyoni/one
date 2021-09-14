@@ -48,10 +48,12 @@ func AddBlock(chain *blockchain) *Block {
 }
 
 func GetCurrentDifficulty(chain *blockchain) int {
-	if len(Blocks(chain)) == 0 {
+	blockLength := len(Blocks(chain))
+
+	if blockLength == 0 {
 		return chain.CurrentDifficulty
 	}
-	if len(Blocks(chain))%5 == 0 {
+	if blockLength%5 == 0 {
 		return chain.reCalculateDifficulty()
 	} else {
 		return chain.CurrentDifficulty

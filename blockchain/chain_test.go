@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/chiwon99881/one/utils"
 )
@@ -127,4 +128,95 @@ func TestAddBlock(t *testing.T) {
 		t.Fatalf("chain's newestHash should be same block.Hash")
 	}
 	m = nil
+}
+
+func TestGetCurrentDifficulty(t *testing.T) {
+	t.Run("get current chain difficulty", func(t *testing.T) {
+		index := 0
+		chain = &blockchain{
+			NewestHash:        "firstHash",
+			CurrentDifficulty: 2,
+		}
+		dbOperator = &testDataBase{
+			testFindBlock: func(hash string) []byte {
+				defer func() {
+					index++
+				}()
+				var block *Block
+				if index == 0 {
+					block = &Block{
+						Hash:     hash,
+						PrevHash: "prev",
+					}
+				} else {
+					block = &Block{
+						Hash:     "prev",
+						PrevHash: "",
+					}
+				}
+				blockAsBytes := utils.ToBytes(block)
+				return blockAsBytes
+			},
+		}
+		diff := GetCurrentDifficulty(chain)
+		if diff != chain.CurrentDifficulty {
+			t.Fatalf("current difficulty should be %d but got %d", chain.CurrentDifficulty, diff)
+		}
+	})
+
+	t.Run("get recalculate difficulty", func(t *testing.T) {
+		index := 0
+		chain = &blockchain{
+			NewestHash:        "hash",
+			CurrentDifficulty: 2,
+		}
+		dbOperator = &testDataBase{
+			testFindBlock: func(hash string) []byte {
+				fmt.Println(index)
+				var block *Block
+				switch index {
+				case 0:
+					block = &Block{
+						Hash:      "hash1",
+						PrevHash:  "prevHash1",
+						Timestamp: int(time.Now().Unix()) + 4,
+					}
+				case 1:
+					block = &Block{
+						Hash:      "hash2",
+						PrevHash:  "prevHash2",
+						Timestamp: int(time.Now().Unix()) + 3,
+					}
+				case 2:
+					block = &Block{
+						Hash:      "hash3",
+						PrevHash:  "prevHash3",
+						Timestamp: int(time.Now().Unix()) + 2,
+					}
+				case 3:
+					block = &Block{
+						Hash:      "hash4",
+						PrevHash:  "prevHash4",
+						Timestamp: int(time.Now().Unix()) + 1,
+					}
+				case 4:
+					block = &Block{
+						Hash:      "hash5",
+						PrevHash:  "prevHash5",
+						Timestamp: int(time.Now().Unix()) + 0,
+					}
+				case 5:
+					index = 0
+					return nil
+				}
+				blockAsBytes := utils.ToBytes(block)
+				index++
+				return blockAsBytes
+			},
+		}
+		GetCurrentDifficulty(chain)
+		if chain.CurrentDifficulty != 3 {
+			t.Fatalf("chain's CurrentDifficulty should be 3 but got %d", chain.CurrentDifficulty)
+		}
+	})
 }
