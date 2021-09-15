@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -163,8 +164,10 @@ func TestGetCurrentDifficulty(t *testing.T) {
 			t.Fatalf("current difficulty should be %d but got %d", chain.CurrentDifficulty, diff)
 		}
 	})
+}
 
-	t.Run("get recalculate difficulty", func(t *testing.T) {
+func TestReCalculateDifficulty(t *testing.T) {
+	t.Run("get increased difficulty", func(t *testing.T) {
 		index := 0
 		chain = &blockchain{
 			NewestHash:        "hash",
@@ -172,42 +175,14 @@ func TestGetCurrentDifficulty(t *testing.T) {
 		}
 		dbOperator = &testDataBase{
 			testFindBlock: func(hash string) []byte {
-				fmt.Println(index)
-				var block *Block
-				switch index {
-				case 0:
-					block = &Block{
-						Hash:      "hash1",
-						PrevHash:  "prevHash1",
-						Timestamp: int(time.Now().Unix()) + 4,
-					}
-				case 1:
-					block = &Block{
-						Hash:      "hash2",
-						PrevHash:  "prevHash2",
-						Timestamp: int(time.Now().Unix()) + 3,
-					}
-				case 2:
-					block = &Block{
-						Hash:      "hash3",
-						PrevHash:  "prevHash3",
-						Timestamp: int(time.Now().Unix()) + 2,
-					}
-				case 3:
-					block = &Block{
-						Hash:      "hash4",
-						PrevHash:  "prevHash4",
-						Timestamp: int(time.Now().Unix()) + 1,
-					}
-				case 4:
-					block = &Block{
-						Hash:      "hash5",
-						PrevHash:  "prevHash5",
-						Timestamp: int(time.Now().Unix()) + 0,
-					}
-				case 5:
+				if index == 5 {
 					index = 0
 					return nil
+				}
+				block := &Block{
+					Hash:      "hash1",
+					PrevHash:  "prevHash1",
+					Timestamp: int(time.Now().Unix()) + (4 - index),
 				}
 				blockAsBytes := utils.ToBytes(block)
 				index++
@@ -217,6 +192,88 @@ func TestGetCurrentDifficulty(t *testing.T) {
 		GetCurrentDifficulty(chain)
 		if chain.CurrentDifficulty != 3 {
 			t.Fatalf("chain's CurrentDifficulty should be 3 but got %d", chain.CurrentDifficulty)
+		}
+	})
+
+	t.Run("get decreased difficulty", func(t *testing.T) {
+		index := 0
+		chain = &blockchain{
+			NewestHash:        "hash",
+			CurrentDifficulty: 2,
+		}
+		dbOperator = &testDataBase{
+			testFindBlock: func(hash string) []byte {
+				if index == 5 {
+					index = 0
+					return nil
+				}
+				var block *Block
+				switch index {
+				case 0:
+					block = &Block{
+						Hash:      "hash1",
+						PrevHash:  "prevHash1",
+						Timestamp: int(time.Now().Unix()) + (1000000),
+					}
+				default:
+					block = &Block{
+						Hash:      "hash1",
+						PrevHash:  "prevHash1",
+						Timestamp: int(time.Now().Unix()),
+					}
+				}
+				blockAsBytes := utils.ToBytes(block)
+				index++
+				return blockAsBytes
+			},
+		}
+		GetCurrentDifficulty(chain)
+		if chain.CurrentDifficulty != 1 {
+			t.Fatalf("chain's CurrentDifficulty should be 1 but got %d", chain.CurrentDifficulty)
+		}
+	})
+
+	t.Run("get same difficulty", func(t *testing.T) {
+		index := 0
+		chain = &blockchain{
+			NewestHash:        "hash",
+			CurrentDifficulty: 2,
+		}
+		dbOperator = &testDataBase{
+			testFindBlock: func(hash string) []byte {
+				if index == 5 {
+					index = 0
+					return nil
+				}
+				var block *Block
+				switch index {
+				case 0:
+					block = &Block{
+						Hash:      "hash1",
+						PrevHash:  "prevHash1",
+						Timestamp: int(time.Now().Unix()) + (420),
+					}
+				case 4:
+					block = &Block{
+						Hash:      "hash4",
+						PrevHash:  "prevHash4",
+						Timestamp: int(time.Now().Unix()),
+					}
+				default:
+					block = &Block{
+						Hash:      "hash" + strconv.Itoa(index),
+						PrevHash:  "prevHash" + strconv.Itoa(index),
+						Timestamp: int(time.Now().Unix()),
+					}
+				}
+				blockAsBytes := utils.ToBytes(block)
+				index++
+				return blockAsBytes
+			},
+		}
+		GetCurrentDifficulty(chain)
+		if chain.CurrentDifficulty != 2 {
+			t.Fatalf("chain's CurrentDifficulty should be 2 but got %d", chain.CurrentDifficulty)
 		}
 	})
 }
