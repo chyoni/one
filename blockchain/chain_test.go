@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"fmt"
+	"net/http/httptest"
 	"strconv"
 	"sync"
 	"testing"
@@ -276,4 +277,17 @@ func TestReCalculateDifficulty(t *testing.T) {
 			t.Fatalf("chain's CurrentDifficulty should be 2 but got %d", chain.CurrentDifficulty)
 		}
 	})
+}
+
+func TestStatus(t *testing.T) {
+	chain = &blockchain{
+		NewestHash:        "hash",
+		Height:            5,
+		CurrentDifficulty: 3,
+	}
+	rw := httptest.NewRecorder()
+	err := Status(rw)
+	if err != nil {
+		t.Fatalf("chain status should be OK but got %s", err)
+	}
 }
